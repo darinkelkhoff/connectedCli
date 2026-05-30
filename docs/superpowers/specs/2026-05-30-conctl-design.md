@@ -77,18 +77,33 @@ All endpoints below were verified live during design (2026-05-30).
   `/shows/17` listing / episode-page titles, which contain `"605: Being
   Completely Awesome"`-style titles.
 
-### 2. The Rickies — rickies.co API
+### 2. The Rickies — rickies.net API (primary)
 
-- `GET https://rickies.co/api/chairmen.json` → JSON:
-  ```json
-  {
-    "keynote_chairman": { "name": "...", "last_name": "...", "location": "...", "twitter": "...", "memoji": "..." },
-    "annual_chairman":  { "name": "...", "last_name": "...", "location": "...", "twitter": "...", "memoji": "..." }
-  }
-  ```
-- Open-source project: https://github.com/lexpostma/Rickies. Leaderboard data is
-  **not** in the API today (site-only); v1 ships the chairmen endpoint and notes
-  leaderboard as a possible future scrape.
+There are two independent Rickies fan sites. **rickies.net is the primary
+source** — it exposes a real, versioned, static JSON API; rickies.co offers only
+a single endpoint and is a minor fallback.
+
+- **rickies.net** (TiddlyWiki, GitHub Pages, source
+  https://github.com/jbiatek/rickies.net) publishes a static JSON API under
+  `https://rickies.net/api/v1/`:
+  - `winners.json` — **current standings**: `annual` chairman, `keynote`
+    chairman, `flexies`, `annual-flexies`, and `titles` (per-host title lists for
+    Stephen / Myke / Federico). Each entry carries `game-name`, `date`, `winner`,
+    `title`, `social`. (Verified: annual = Stephen / 2025 Annual; keynote =
+    Federico / 2026 March.)
+  - `index.json` (~80 KB) — every Rickies game ever, keyed by game name
+    (`2017 Annual Predictions` … `2026 March Rickies`, plus specials:
+    `The AirPower Game`, `The EUies`, `The Stephenlympics`, `The Ticcilympics`).
+  - `episodes.json` — array of `{ "episode": 123, "permalink": "...", "relevant-games": [...] }`
+    mapping Connected episode numbers ↔ Rickies games. Enables cross-linking the
+    episode/chapter features with Rickies history.
+  - `winners.json`, `charity.json`, `billchanges.json`, `ineligible.json`, plus
+    `game/`, `pick/`, `topic/`, `coinflip/` subdirectories for per-item detail.
+  - All plain JSON over HTTPS, no auth.
+- **rickies.co** (minor fallback) — `GET https://rickies.co/api/chairmen.json`
+  returns just the two current chairmen with `name`/`location`/`twitter`/`memoji`
+  image URLs. Only consulted if rickies.net is unavailable, or to enrich with
+  memoji art. Source: https://github.com/lexpostma/Rickies.
 
 ### 3. Episodes & chapters — Connected RSS + MP3 ID3
 
@@ -149,9 +164,14 @@ How a selected chapter is emitted:
   Human output: ranked hits with episode, `HH:MM:SS`, bolded snippet, and a
   clickable deep-link to the exact second. `--json`: array of
   `{episodeInternalId, episodeNumber?, episodeTitle?, time, seconds, snippet, url}`.
-- `conctl rickies [--json]` — current keynote + annual **Chairman** (name,
-  location, memoji link) from `chairmen.json`. `--json` passes the upstream shape
-  through (normalized).
+- `conctl rickies [--json]` — current standings from `rickies.net/api/v1/winners.json`:
+  keynote chairman, annual chairman, flexies, and per-host titles
+  (Stephen / Myke / Federico), with the game name and date each was won.
+  - `conctl rickies titles [host]` — title list per host.
+  - `conctl rickies games [--json]` — list every Rickies game (`index.json`).
+  - `conctl rickies game <name>` — detail for one game.
+  - Episode cross-link: when an episode is targeted elsewhere, conctl can note its
+    `relevant-games` from `episodes.json`.
 
 ## LLM providers (`--llm`)
 
@@ -202,7 +222,8 @@ Presets are data (embedded), easy to extend.
   `[]Chapter{index,title,startMs,endMs}`.
 - `internal/podsearch` — `Search(term)`; episode transcript fetch + time-range
   text slice; ep# ↔ internalId mapping.
-- `internal/rickies` — `chairmen.json` client.
+- `internal/rickies` — `rickies.net/api/v1` client (winners/index/episodes/game);
+  optional rickies.co fallback.
 - `internal/audio` — `ffplay` segment wrapper (+ missing-ffmpeg detection) and
   `say` wrapper.
 - `internal/llm` — provider interface + detectors + embedded prompt presets.
@@ -217,7 +238,7 @@ recorded fixtures.
 - search hit: `{ "episodeInternalId": 7950, "episodeNumber": 605, "episodeTitle": "...", "time": "01:40:25", "seconds": 6025, "snippet": "...", "url": "https://podcastsearch.david-smith.org/episodes/7950#6025" }`
 - chapter: `{ "index": 8, "title": "...", "start": "01:38:00", "startMs": 5880000, "endMs": 6300000 }`
 - chapter content (text/llm): chapter object + `{ "text": "...", "source": "transcript|llm", "provider": "claude" }`
-- rickies: `{ "keynoteChairman": {...}, "annualChairman": {...} }`
+- rickies: `{ "annual": {...}, "keynote": {...}, "flexies": {...}, "titles": { "Stephen": [...], "Myke": [...], "Federico": [...] } }` (pass-through of `winners.json`, normalized)
 
 ## Error handling
 
@@ -232,8 +253,9 @@ recorded fixtures.
 ## Testing
 
 - Table tests against **saved fixtures** captured from the real endpoints:
-  a `/shows/17?term=…` results page, an episode transcript page, `chairmen.json`,
-  a feed `<item>`, and a truncated MP3 ID3 region with known `CHAP` frames.
+  a `/shows/17?term=…` results page, an episode transcript page,
+  `rickies.net/api/v1/winners.json` (+ `index.json`/`episodes.json`), a feed
+  `<item>`, and a truncated MP3 ID3 region with known `CHAP` frames.
 - Golden-file tests for pretty (human) output.
 - No live network in tests.
 - LLM providers tested with a fake provider implementing the interface; detection
@@ -245,7 +267,11 @@ recorded fixtures.
    Swift helper and breaks pure-Go). Promote to core?
 2. **Default render** for `--intro`/`--exit` is **text** (approved). `--play`,
    `--say`, `--llm` are opt-in.
-3. Rickies **leaderboard** scraping is out of v1 (API only exposes chairmen).
+3. Rickies source is **rickies.net/api/v1** (rich JSON: standings, titles, games,
+   episode cross-links), with rickies.co as a minor fallback. Standings/titles are
+   now **in** v1 (earlier deferral reversed). Per-game pick detail (`pick/`,
+   `topic/`, `coinflip/`) is available but only `rickies game <name>` summary is
+   in v1 scope; deeper drill-down is a later add.
 
 ## Suggested build order
 
