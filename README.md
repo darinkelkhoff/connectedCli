@@ -15,6 +15,7 @@ built for both human power users and AI agents. Inspired by Stephen Hackett's
     conctl rickies                 # current Rickies chairmen & titles
     conctl rickies games           # every Rickies game ever
     conctl chapters                # list the latest episode's chapters
+    conctl notes                   # show notes & links for an episode (from the RSS)
     conctl play --last             # play a chapter (needs ffmpeg)
     conctl --intro                 # the cold open (first chapter)
     conctl --exit                  # the sign-off (last chapter)

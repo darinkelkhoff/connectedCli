@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -13,11 +14,13 @@ const FeedURL = "https://relay.fm/connected/feed"
 
 // Episode is one Connected episode.
 type Episode struct {
-	Number int       `json:"number"`
-	Title  string    `json:"title"`
-	Date   time.Time `json:"date"`
-	MP3URL string    `json:"mp3Url"`
-	Link   string    `json:"link"`
+	Number    int       `json:"number"`
+	Title     string    `json:"title"`
+	Date      time.Time `json:"date"`
+	MP3URL    string    `json:"mp3Url"`
+	Link      string    `json:"link"`
+	Summary   string    `json:"summary,omitempty"`
+	NotesHTML string    `json:"-"` // raw content:encoded; parsed by the notes command
 }
 
 type rss struct {
@@ -27,6 +30,8 @@ type rss struct {
 			Link      string `xml:"link"`
 			PubDate   string `xml:"pubDate"`
 			Episode   int    `xml:"http://www.itunes.com/dtds/podcast-1.0.dtd episode"`
+			Summary   string `xml:"http://www.itunes.com/dtds/podcast-1.0.dtd summary"`
+			Notes     string `xml:"http://purl.org/rss/1.0/modules/content/ encoded"`
 			Enclosure struct {
 				URL string `xml:"url,attr"`
 			} `xml:"enclosure"`
@@ -44,11 +49,13 @@ func Parse(data []byte) ([]Episode, error) {
 	for _, it := range doc.Channel.Items {
 		date, _ := time.Parse(time.RFC1123Z, it.PubDate)
 		out = append(out, Episode{
-			Number: it.Episode,
-			Title:  it.Title,
-			Date:   date,
-			MP3URL: it.Enclosure.URL,
-			Link:   it.Link,
+			Number:    it.Episode,
+			Title:     it.Title,
+			Date:      date,
+			MP3URL:    it.Enclosure.URL,
+			Link:      it.Link,
+			Summary:   strings.TrimSpace(it.Summary),
+			NotesHTML: it.Notes,
 		})
 	}
 	return out, nil
