@@ -41,6 +41,7 @@ Add --json to any command for agent-friendly output.`,
 	for _, c := range registerCommands {
 		root.AddCommand(c)
 	}
+	bindIntroExit(root)
 	return root
 }
 

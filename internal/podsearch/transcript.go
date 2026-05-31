@@ -70,6 +70,19 @@ func parseShowListing(htmlStr string) map[int]int {
 	return m
 }
 
+// firstListedEpisode returns the episode number of the first listing entry.
+// The listing is newest-first, so this is the newest transcribed episode.
+// (Using document order avoids treating a year-prefixed title like
+// "2016: Big, Heavy and Vague" as the newest episode number.)
+func firstListedEpisode(htmlStr string) int {
+	mm := listingRe.FindStringSubmatch(htmlStr)
+	if mm == nil {
+		return 0
+	}
+	num, _ := strconv.Atoi(mm[2])
+	return num
+}
+
 // FetchTranscript downloads and parses an episode transcript by internal id.
 func FetchTranscript(ctx context.Context, internalID int) ([]Segment, error) {
 	u := fmt.Sprintf("%s/episodes/%d", BaseURL, internalID)
@@ -90,12 +103,7 @@ func InternalID(ctx context.Context, episodeNumber int) (int, error) {
 	m := parseShowListing(string(body))
 	id, ok := m[episodeNumber]
 	if !ok {
-		newest := 0
-		for n := range m {
-			if n > newest {
-				newest = n
-			}
-		}
+		newest := firstListedEpisode(string(body))
 		if newest > 0 {
 			return 0, fmt.Errorf("no transcript yet for episode %d (newest transcribed is %d; transcripts lag the feed). Try --play for audio, or --episode %d", episodeNumber, newest, newest)
 		}
@@ -110,12 +118,7 @@ func NewestTranscribed(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	newest := 0
-	for n := range parseShowListing(string(body)) {
-		if n > newest {
-			newest = n
-		}
-	}
+	newest := firstListedEpisode(string(body))
 	if newest == 0 {
 		return 0, fmt.Errorf("could not determine newest transcribed episode")
 	}

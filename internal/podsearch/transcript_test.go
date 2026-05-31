@@ -44,3 +44,11 @@ func TestEpisodeNumberFromListing(t *testing.T) {
 		t.Errorf("expected 601->7950, got %d", m[601])
 	}
 }
+
+func TestFirstListedEpisodeIsNewest(t *testing.T) {
+	data, _ := os.ReadFile("testdata/show_listing.html")
+	// Listing is newest-first; fixture's top entry is 601.
+	if got := firstListedEpisode(string(data)); got != 601 {
+		t.Errorf("expected newest 601, got %d", got)
+	}
+}
