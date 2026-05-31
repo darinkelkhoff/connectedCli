@@ -34,9 +34,11 @@ func bindIntroExit(root *cobra.Command) {
 	f.IntVar(&ie.episode, "episode", 0, "target episode number (default: latest)")
 
 	// When --intro/--exit are present and no subcommand is given, run here.
+	// With no flags at all, show the banner (NOT the full help).
 	root.RunE = func(c *cobra.Command, args []string) error {
 		if !ie.intro && !ie.exit {
-			return c.Help()
+			printBanner(c.OutOrStdout())
+			return nil
 		}
 		return runIntroExit(c)
 	}
