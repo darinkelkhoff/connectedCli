@@ -24,6 +24,7 @@ var wordmark = []string{
 const (
 	ansiReset = "\033[0m"
 	ansiBold  = "\033[1m"
+	ansiDim   = "\033[2m"
 )
 
 // wordmarkGradient colors the seven wordmark rows top-to-bottom:
@@ -74,5 +75,5 @@ func printBanner(w io.Writer) {
 	tagline := "The Connected CLI"
 	fmt.Fprintf(w, "\n%s%s\n\n", strings.Repeat(" ", 21), colorize(tagline, ansiBold))
 	fmt.Fprintln(w, rundown)
-	fmt.Fprintln(w)
+	fmt.Fprintf(w, "\n%s\n\n", colorize("Run `conctl --help` for all commands and flags.", ansiDim))
 }
