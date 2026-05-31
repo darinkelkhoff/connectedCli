@@ -49,8 +49,8 @@ func colorEnabled(w io.Writer) bool {
 }
 
 // printBanner writes the no-argument splash: three-host dots, the conctl
-// wordmark, and a one-line pointer to --help. It deliberately does NOT print
-// the full help content.
+// wordmark, the tagline, and the show-style rundown. It deliberately does NOT
+// print cobra's full usage/flags help — that's reserved for -h/--help.
 func printBanner(w io.Writer) {
 	color := colorEnabled(w)
 	colorize := func(s, code string) string {
@@ -69,7 +69,7 @@ func printBanner(w io.Writer) {
 	}
 
 	tagline := "the Connected CLI"
-	fmt.Fprintf(w, "\n%s%s%s\n", strings.Repeat(" ", 21), colorize(tagline, ansiBold), "")
-	hint := "Run `conctl --help` to see what it can do."
-	fmt.Fprintf(w, "%s%s\n\n", strings.Repeat(" ", 16), colorize(hint, ansiDim))
+	fmt.Fprintf(w, "\n%s%s\n\n", strings.Repeat(" ", 21), colorize(tagline, ansiBold))
+	fmt.Fprintln(w, rundown)
+	fmt.Fprintln(w)
 }

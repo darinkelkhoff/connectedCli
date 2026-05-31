@@ -16,22 +16,21 @@ var jsonOutput bool
 // registerCommands holds subcommands registered from their own files' init().
 var registerCommands []*cobra.Command
 
-func NewRootCmd() *cobra.Command {
-	root := &cobra.Command{
-		Use:     "conctl",
-		Short:   "A command-line companion for the Connected podcast",
-		Version: Version,
-		Long: `conctl — the Connected CLI.
-
-Tonight's rundown:
+// rundown is the show-style command listing, shared by the no-arg banner and --help.
+const rundown = `Tonight's rundown:
   Follow-up        conctl search <query>     search the transcripts
   Topics           conctl chapters [ep]      list an episode's chapters
                    conctl play [ep]          play a chapter
   The Rickies      conctl rickies            current chairmen & standings
   The Intro        conctl --intro            the cold open
-  The Exit         conctl --exit             the sign-off
+  The Exit         conctl --exit             the sign-off`
 
-Add --json to any command for agent-friendly output.`,
+func NewRootCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:     "conctl",
+		Short:   "A command-line companion for the Connected podcast",
+		Version: Version,
+		Long: "conctl — the Connected CLI.\n\n" + rundown,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

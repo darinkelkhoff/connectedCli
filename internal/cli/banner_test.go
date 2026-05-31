@@ -21,8 +21,16 @@ func TestNoArgShowsBannerNotHelp(t *testing.T) {
 	if !strings.Contains(got, "██████") {
 		t.Errorf("banner wordmark missing:\n%s", got)
 	}
-	// No-arg must NOT dump the full help rundown.
-	if strings.Contains(got, "Tonight's rundown") {
-		t.Errorf("no-arg should not print full help content:\n%s", got)
+	// No-arg includes the rundown...
+	if !strings.Contains(got, "Tonight's rundown") {
+		t.Errorf("no-arg should include the rundown:\n%s", got)
+	}
+	// ...but not cobra's usage/flags help.
+	if strings.Contains(got, "Usage:") || strings.Contains(got, "Flags:") {
+		t.Errorf("no-arg should not print cobra usage/flags:\n%s", got)
+	}
+	// The --json line was removed from both modes.
+	if strings.Contains(got, "Add --json") {
+		t.Errorf("the 'Add --json' line should be gone:\n%s", got)
 	}
 }
