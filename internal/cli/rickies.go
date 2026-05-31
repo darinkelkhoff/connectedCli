@@ -4,12 +4,22 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/dkelkhoff/connectedCli/internal/render"
 	"github.com/dkelkhoff/connectedCli/internal/rickies"
 	"github.com/spf13/cobra"
 )
+
+// formatTitles renders a host's titles for text output: semicolon-delimited,
+// or "Man of the People" when the host holds no titles.
+func formatTitles(titles []string) string {
+	if len(titles) == 0 {
+		return "Man of the People"
+	}
+	return strings.Join(titles, "; ")
+}
 
 func init() {
 	root := &cobra.Command{
@@ -35,7 +45,7 @@ func init() {
 			}
 			sort.Strings(hosts)
 			for _, h := range hosts {
-				fmt.Fprintf(out, "  %s: %v\n", h, w.Titles[h])
+				fmt.Fprintf(out, "  %s: %s\n", h, formatTitles(w.Titles[h]))
 			}
 			return nil
 		},
@@ -58,8 +68,13 @@ func init() {
 			if jsonOutput {
 				return render.JSON(c.OutOrStdout(), data)
 			}
-			for h, ts := range data {
-				fmt.Fprintf(c.OutOrStdout(), "%s: %v\n", h, ts)
+			hosts := make([]string, 0, len(data))
+			for h := range data {
+				hosts = append(hosts, h)
+			}
+			sort.Strings(hosts)
+			for _, h := range hosts {
+				fmt.Fprintf(c.OutOrStdout(), "%s: %s\n", h, formatTitles(data[h]))
 			}
 			return nil
 		},
