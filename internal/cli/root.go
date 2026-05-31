@@ -27,14 +27,16 @@ const rundown = `Chapters:
 
 func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
-		Use:     "conctl",
-		Short:   "A command-line companion for the Connected podcast",
-		Version: Version,
-		Long: "conctl — the Connected CLI.\n\n" + rundown,
+		Use:           "conctl",
+		Short:         "A command-line companion for the Connected podcast",
+		Version:       Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
 	root.SetVersionTemplate("conctl {{.Version}}\n")
+	// --help shows just usage and below (the Chapters rundown lives in the
+	// no-argument banner, not in help).
+	root.SetHelpTemplate("{{.UsageString}}")
 	root.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit structured JSON for agents")
 
 	for _, c := range registerCommands {

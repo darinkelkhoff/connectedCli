@@ -105,11 +105,23 @@ func InternalID(ctx context.Context, episodeNumber int) (int, error) {
 	if !ok {
 		newest := firstListedEpisode(string(body))
 		if newest > 0 {
-			return 0, fmt.Errorf("no transcript yet for episode %d (newest transcribed is %d; transcripts lag the feed). Try --play for audio, or --episode %d", episodeNumber, newest, newest)
+			return 0, &NoTranscriptError{Episode: episodeNumber, Newest: newest}
 		}
 		return 0, fmt.Errorf("no transcript found for episode %d", episodeNumber)
 	}
 	return id, nil
+}
+
+// NoTranscriptError indicates an episode has no transcript yet — David Smith's
+// transcripts lag the feed by a few episodes. Newest is the most recent
+// transcribed episode.
+type NoTranscriptError struct {
+	Episode int
+	Newest  int
+}
+
+func (e *NoTranscriptError) Error() string {
+	return fmt.Sprintf("no transcript yet for episode %d (newest transcribed is %d; transcripts lag the feed). Try --play for audio, or --episode %d", e.Episode, e.Newest, e.Newest)
 }
 
 // NewestTranscribed returns the highest episode number David Smith has transcribed.

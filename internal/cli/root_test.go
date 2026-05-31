@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestRootHelpMentionsRundown(t *testing.T) {
+func TestRootHelpIsUsageOnly(t *testing.T) {
 	cmd := NewRootCmd()
 	var out bytes.Buffer
 	cmd.SetOut(&out)
@@ -14,8 +14,13 @@ func TestRootHelpMentionsRundown(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute: %v", err)
 	}
-	if !strings.Contains(out.String(), "The Rickies") {
-		t.Fatalf("help should read like a show rundown, got:\n%s", out.String())
+	got := out.String()
+	if !strings.Contains(got, "Usage:") {
+		t.Fatalf("help should show usage, got:\n%s", got)
+	}
+	// The Chapters rundown belongs to the no-arg banner, not --help.
+	if strings.Contains(got, "Chapters:") {
+		t.Fatalf("help should NOT include the Chapters rundown, got:\n%s", got)
 	}
 }
 
