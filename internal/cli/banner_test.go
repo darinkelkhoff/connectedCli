@@ -15,7 +15,7 @@ func TestNoArgShowsBannerNotHelp(t *testing.T) {
 		t.Fatalf("execute: %v", err)
 	}
 	got := out.String()
-	if !strings.Contains(got, "the Connected CLI") {
+	if !strings.Contains(got, "The Connected CLI") {
 		t.Errorf("banner tagline missing:\n%s", got)
 	}
 	if !strings.Contains(got, "██████") {

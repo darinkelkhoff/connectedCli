@@ -24,9 +24,6 @@ var wordmark = []string{
 const (
 	ansiReset = "\033[0m"
 	ansiBold  = "\033[1m"
-	ansiRed   = "\033[91m"
-	ansiGreen = "\033[92m"
-	ansiBlue  = "\033[94m"
 )
 
 // wordmarkGradient colors the seven wordmark rows top-to-bottom:
@@ -69,15 +66,12 @@ func printBanner(w io.Writer) {
 		return code + s + ansiReset
 	}
 
-	// Three overlapping-circle motif (the three hosts), red / green / blue.
-	dots := colorize("●", ansiRed) + " " + colorize("●", ansiGreen) + " " + colorize("●", ansiBlue)
-	fmt.Fprintf(w, "\n            %s\n\n", dots)
-
+	fmt.Fprintln(w)
 	for i, line := range wordmark {
 		fmt.Fprintln(w, colorize(line, wordmarkGradient[i%len(wordmarkGradient)]))
 	}
 
-	tagline := "the Connected CLI"
+	tagline := "The Connected CLI"
 	fmt.Fprintf(w, "\n%s%s\n\n", strings.Repeat(" ", 21), colorize(tagline, ansiBold))
 	fmt.Fprintln(w, rundown)
 	fmt.Fprintln(w)
