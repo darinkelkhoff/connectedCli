@@ -19,18 +19,23 @@ var wordmark = []string{
 
 // ANSI color codes; a vertical gradient evokes the colorful Connected artwork.
 const (
-	ansiReset   = "\033[0m"
-	ansiBold    = "\033[1m"
-	ansiDim     = "\033[2m"
-	ansiRed     = "\033[91m"
-	ansiGreen   = "\033[92m"
-	ansiYellow  = "\033[93m"
-	ansiBlue    = "\033[94m"
-	ansiMagenta = "\033[95m"
-	ansiCyan    = "\033[96m"
+	ansiReset = "\033[0m"
+	ansiBold  = "\033[1m"
+	ansiRed   = "\033[91m"
+	ansiGreen = "\033[92m"
+	ansiBlue  = "\033[94m"
 )
 
-var wordmarkGradient = []string{ansiCyan, ansiBlue, ansiMagenta, ansiRed, ansiYellow, ansiGreen}
+// wordmarkGradient colors the six wordmark rows top-to-bottom:
+// green, yellow, orange, red, purple, blue (256-color for a true orange/purple).
+var wordmarkGradient = []string{
+	"\033[38;5;46m",  // green
+	"\033[38;5;226m", // yellow
+	"\033[38;5;208m", // orange
+	"\033[38;5;196m", // red
+	"\033[38;5;129m", // purple
+	"\033[38;5;33m",  // blue
+}
 
 // colorEnabled reports whether w is a real terminal and color isn't suppressed.
 func colorEnabled(w io.Writer) bool {

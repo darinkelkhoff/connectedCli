@@ -22,8 +22,8 @@ func TestNoArgShowsBannerNotHelp(t *testing.T) {
 		t.Errorf("banner wordmark missing:\n%s", got)
 	}
 	// No-arg includes the rundown...
-	if !strings.Contains(got, "Tonight's rundown") {
-		t.Errorf("no-arg should include the rundown:\n%s", got)
+	if !strings.Contains(got, "Chapters:") {
+		t.Errorf("no-arg should include the Chapters rundown:\n%s", got)
 	}
 	// ...but not cobra's usage/flags help.
 	if strings.Contains(got, "Usage:") || strings.Contains(got, "Flags:") {

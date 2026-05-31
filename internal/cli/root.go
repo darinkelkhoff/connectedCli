@@ -17,13 +17,13 @@ var jsonOutput bool
 var registerCommands []*cobra.Command
 
 // rundown is the show-style command listing, shared by the no-arg banner and --help.
-const rundown = `Tonight's rundown:
+const rundown = `Chapters:
+  Intro            conctl --intro            the cold open
   Follow-up        conctl search <query>     search the transcripts
   Topics           conctl chapters [ep]      list an episode's chapters
                    conctl play [ep]          play a chapter
   The Rickies      conctl rickies            current chairmen & standings
-  The Intro        conctl --intro            the cold open
-  The Exit         conctl --exit             the sign-off`
+  Closing          conctl --exit             the sign-off`
 
 func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
