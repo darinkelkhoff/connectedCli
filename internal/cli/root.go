@@ -23,6 +23,7 @@ const rundown = `Chapters:
   Topics           conctl chapters [ep]      list an episode's chapters
                    conctl play [ep]          play a chapter
   The Rickies      conctl rickies            current chairmen & standings
+  Show Notes       conctl notes [ep]         links & summary for an episode
   Closing          conctl --exit             the sign-off`
 
 func NewRootCmd() *cobra.Command {
