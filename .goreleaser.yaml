@@ -1,5 +1,9 @@
 version: 2
 project_name: conctl
+release:
+  github:
+    owner: dkelkhoff
+    name: connectedCli
 builds:
   - id: conctl
     main: ./cmd/conctl
@@ -11,7 +15,7 @@ builds:
       - -s -w -X github.com/dkelkhoff/connectedCli/internal/cli.Version={{.Version}}
 archives:
   - formats: [tar.gz]
-brews:
+homebrew_casks:
   - name: conctl
     repository:
       owner: dkelkhoff
@@ -19,7 +23,11 @@ brews:
     homepage: "https://github.com/dkelkhoff/connectedCli"
     description: "A command-line companion for the Connected podcast"
     dependencies:
-      - name: ffmpeg
-        type: optional
-    test: |
-      system "#{bin}/conctl", "--version"
+      - formula: ffmpeg
+    # Remove the Gatekeeper quarantine flag so the unsigned binary runs.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/conctl"]
+          end
