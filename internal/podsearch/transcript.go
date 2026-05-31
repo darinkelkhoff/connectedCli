@@ -90,9 +90,36 @@ func InternalID(ctx context.Context, episodeNumber int) (int, error) {
 	m := parseShowListing(string(body))
 	id, ok := m[episodeNumber]
 	if !ok {
+		newest := 0
+		for n := range m {
+			if n > newest {
+				newest = n
+			}
+		}
+		if newest > 0 {
+			return 0, fmt.Errorf("no transcript yet for episode %d (newest transcribed is %d; transcripts lag the feed). Try --play for audio, or --episode %d", episodeNumber, newest, newest)
+		}
 		return 0, fmt.Errorf("no transcript found for episode %d", episodeNumber)
 	}
 	return id, nil
+}
+
+// NewestTranscribed returns the highest episode number David Smith has transcribed.
+func NewestTranscribed(ctx context.Context) (int, error) {
+	body, err := getBody(ctx, fmt.Sprintf("%s/shows/%d", BaseURL, ConnectedShow))
+	if err != nil {
+		return 0, err
+	}
+	newest := 0
+	for n := range parseShowListing(string(body)) {
+		if n > newest {
+			newest = n
+		}
+	}
+	if newest == 0 {
+		return 0, fmt.Errorf("could not determine newest transcribed episode")
+	}
+	return newest, nil
 }
 
 func getBody(ctx context.Context, u string) ([]byte, error) {
