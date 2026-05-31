@@ -1,0 +1,52 @@
+package cli
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+)
+
+// Version is overridden at build time via -ldflags.
+var Version = "dev"
+
+// jsonOutput is the global --json flag, read by subcommands.
+var jsonOutput bool
+
+// registerCommands holds subcommands registered from their own files' init().
+var registerCommands []*cobra.Command
+
+func NewRootCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:     "conctl",
+		Short:   "A command-line companion for the Connected podcast",
+		Version: Version,
+		Long: `conctl — the Connected CLI.
+
+Tonight's rundown:
+  Follow-up        conctl search <query>     search the transcripts
+  Topics           conctl chapters [ep]      list an episode's chapters
+                   conctl play [ep]          play a chapter
+  The Rickies      conctl rickies            current chairmen & standings
+  The Intro        conctl --intro            the cold open
+  The Exit         conctl --exit             the sign-off
+
+Add --json to any command for agent-friendly output.`,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+	}
+	root.SetVersionTemplate("conctl {{.Version}}\n")
+	root.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit structured JSON for agents")
+
+	for _, c := range registerCommands {
+		root.AddCommand(c)
+	}
+	return root
+}
+
+func Execute() {
+	if err := NewRootCmd().Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, "conctl:", err)
+		os.Exit(1)
+	}
+}
