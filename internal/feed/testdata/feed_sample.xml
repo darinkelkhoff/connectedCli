@@ -1,0 +1,93 @@
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:sy="http://purl.org/rss/1.0/modules/syndication/" xmlns:admin="http://webns.net/mvcb/" xmlns:atom="http://www.w3.org/2005/Atom/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <title>Connected</title>
+    <link>https://relay.fm/connected</link>
+    <pubDate>Thu, 28 May 2026 21:15:00 GMT</pubDate>
+    <description>Connected is a weekly panel discussion on Apple and the impact of technology on our lives. With each co-host having a unique background — and accent — Connected provides a perspective that no other show can. Hosted by Federico Viticci, Stephen Hackett, and Myke Hurley.</description>
+    <language>en-US</language>
+    <copyright>Copyright © 2026 Relay FM, LLC</copyright>
+    <itunes:author>Relay</itunes:author>
+    <itunes:keywords>hackett, hurley, federico, federico viticci, macstories, apple</itunes:keywords>
+    <itunes:explicit>clean</itunes:explicit>
+    <itunes:image href="http://relayfm.s3.amazonaws.com/uploads/broadcast/image/5/connected_artwork_82973540-95cb-4452-a433-70fe9032cf60.png"/>
+    <itunes:owner>
+      <itunes:name>Relay</itunes:name>
+      <itunes:email>hello@relay.fm</itunes:email>
+    </itunes:owner>
+    <itunes:block>no</itunes:block>
+    <itunes:category text="Technology"/>
+    <itunes:category text="News">
+      <itunes:category text="Tech News"/>
+    </itunes:category>
+    <item>
+      <title>605: Being Completely Awesome</title>
+      <description/>
+      <pubDate>Thu, 28 May 2026 21:15:00 GMT</pubDate>
+      <enclosure url="https://www.podtrac.com/pts/redirect.mp3/mgln.ai/e/613/pscrb.fm/rss/p/clrtpod.com/m/traffic.libsyn.com/connected/connected605b.mp3" length="90013754" type="audio/mp3"/>
+      <link>http://relay.fm/connected/605</link>
+      <guid>http://relay.fm/connected/605</guid>
+      <itunes:title>Being Completely Awesome</itunes:title>
+      <itunes:episode>605</itunes:episode>
+      <itunes:author>Federico Viticci, Stephen Hackett, and Myke Hurley</itunes:author>
+      <itunes:subtitle>Stephen has been blogging, Myke has been shopping, and Federico has been... CLI'ing.</itunes:subtitle>
+      <itunes:summary>Stephen has been blogging, Myke has been shopping, and Federico has been... CLI'ing.</itunes:summary>
+      <itunes:explicit>clean</itunes:explicit>
+      <itunes:duration>4475</itunes:duration>
+      <content:encoded>
+        <![CDATA[<p>Stephen has been blogging, Myke has been shopping, and Federico has been... CLI&#39;ing.</p>
+ <h4>This episode of Connected is sponsored by:</h4> <ul>
+<li><a href="https://sentry.io/">Sentry</a>: Mobile crash reporting and app monitoring. New users get $100 in Sentry credits with code connected26.</li>
+<li><a href="https://steamclock.com/connected">Steamclock</a>: We make great apps. Design and development, from demos to details.</li>
+</ul>
+<h4>Links and Show Notes:</h4>  <h5><a href='https://relay.fm/connected/join'>Get Connected Pro: Preshow, postshow, no ads.</a></h5> <h5><a href='https://relay.fm/connected/feedback'>Submit Feedback</a></h5> <h5><a href="https://www.macrumors.com/2026/05/27/apple-document-to-help-tell-studio-apps-apart/" target="_blank">Apple Publishes Document to Help Users Tell Creator Studio Apps Apart - MacRumors</a></h5> <h5><a href="https://support.apple.com/en-us/127131" target="_blank">Identify Apple Creator Studio apps on your Mac - Apple Support</a></h5> <h5><a href="https://www.macstories.net/stories/a-palazzo-reborn-inside-apples-stunning-new-store-in-via-del-corso-rome/" target="_blank">A Palazzo Reborn: Inside Apple's Stunning New Store in Via del Corso, Rome - MacStories</a></h5> <h5><a href="https://512pixels.net/now/" target="_blank">The Now Page - 512 Pixels</a></h5> <h5><a href="https://512pixels.net/projects/aqua-screenshot-library/compare/" target="_blank">Compare Screenshots Over Time - 512 Pixels</a></h5> <h5><a href="https://www.kickstarter.com/projects/designedincalifornia/designed-in-california-an-apple-history-podcast" target="_blank">Kickstarter: Designed in California</a></h5> <h5><a href="https://gohugo.io/" target="_blank">Hugo</a></h5> <h5><a href="https://www.11ty.dev/" target="_blank">11ty</a></h5> <h5><a href="https://store.google.com/gb/product/google_fitbit_air?hl=en-GB&pli=1" target="_blank">Google Fitbit Air</a></h5> <h5><a href="https://www.youtube.com/watch?v=9GSDvO0LFFE" target="_blank">Fitbit Air: The Truth About the "Whoop Killer" - MKBHD - YouTube</a></h5> <h5><a href="https://apps.apple.com/gb/app/pace-by-athlytic/id6755126439" target="_blank">‎Pace by Athlytic App - App Store</a></h5> <h5><a href="https://ouraring.com/store/rings/oura-ring-5?srsltid=AfmBOopCsq9P9M5qnY6Q0DiGgX8WHtz46qwBtv64sKQjGwHMr4In5mQy" target="_blank">Oura Ring 5</a></h5> <h5><a href="https://www.bloomberg.com/news/features/2026-05-28/apple-ios-27-photos-screenshots-revamped-siri-pro-camera-app-new-ai-features?embedded-checkout=true" target="_blank">Apple iOS 27 Photos, Screenshots: Revamped Siri, Pro Camera App, New AI Features - Bloomberg</a></h5> <h5><a href="https://www.macstories.net/stories/introducing-remctl-the-power-user-reminders-cli-for-macos-and-ai-agents/" target="_blank">Introducing RemCTL: The Power-User Reminders CLI for macOS and AI Agents - MacStories</a></h5>]]>
+      </content:encoded>
+    </item>
+    <item>
+      <title>604: The Floor of the Street</title>
+      <description/>
+      <pubDate>Thu, 21 May 2026 21:00:00 GMT</pubDate>
+      <enclosure url="https://www.podtrac.com/pts/redirect.mp3/mgln.ai/e/613/pscrb.fm/rss/p/clrtpod.com/m/traffic.libsyn.com/connected/connected604.mp3" length="94020112" type="audio/mp3"/>
+      <link>http://relay.fm/connected/604</link>
+      <guid>http://relay.fm/connected/604</guid>
+      <itunes:title>The Floor of the Street</itunes:title>
+      <itunes:episode>604</itunes:episode>
+      <itunes:author>Federico Viticci, Stephen Hackett, and Myke Hurley</itunes:author>
+      <itunes:subtitle>Apple has announced new accessibility features coming to iOS, Google has announced ... a lot of things... at IO, and Federico has announced Shortcuts Playground. (Myke and Stephen don't have anything to announce.)</itunes:subtitle>
+      <itunes:summary>Apple has announced new accessibility features coming to iOS, Google has announced ... a lot of things... at IO, and Federico has announced Shortcuts Playground. (Myke and Stephen don't have anything to announce.)</itunes:summary>
+      <itunes:explicit>clean</itunes:explicit>
+      <itunes:duration>4676</itunes:duration>
+      <content:encoded>
+        <![CDATA[<p>Apple has announced new accessibility features coming to iOS, Google has announced ... a lot of things... at IO, and Federico has announced Shortcuts Playground. (Myke and Stephen don&#39;t have anything to announce.)</p>
+ <h4>This episode of Connected is sponsored by:</h4> <ul>
+<li><a href="http://squarespace.com/connected">Squarespace</a>: Save 10% off your first purchase of a website or domain using code CONNECTED.</li>
+<li><a href="https://steamclock.com/connected">Steamclock</a>: We make great apps. Design and development, from demos to details.</li>
+</ul>
+<h4>Links and Show Notes:</h4>  <h5><a href='https://relay.fm/connected/join'>Get Connected Pro: Preshow, postshow, no ads.</a></h5> <h5><a href='https://relay.fm/connected/feedback'>Submit Feedback</a></h5> <h5><a href="https://astronauts-for-dinner.jonas-langlotz.de/" target="_blank">When Was the ISS Last Over Your House?</a></h5> <h5><a href="https://files.relay.fm/assets/jay-ISS-photo.jpg" target="_blank">Jay's ISS Photo</a></h5> <h5><a href="https://9to5mac.com/2026/05/08/instagram-redesigns-ipad-app-to-what-it-always-should-have-been/?utm_source=dlvr.it&utm_medium=mastodon" target="_blank">Instagram redesigns iPad app to what it always should have been - 9to5Mac</a></h5> <h5><a href="https://www.apple.com/newsroom/2026/05/apple-unveils-new-accessibility-features-and-updates-with-apple-intelligence/" target="_blank">Apple unveils new accessibility features, and updates with Apple Intelligence - Apple</a></h5> <h5><a href="https://www.macstories.net/news/apple-intelligence-infused-accessibility-features-promise-greater-flexibility-and-power/" target="_blank">Apple Intelligence-Infused Accessibility Features Promise Greater Flexibility and Power - MacStories</a></h5> <h5><a href="https://machinelearning.apple.com/research/ferret-ui-2" target="_blank">Ferret-UI 2: Mastering Universal User Interface Understanding Across Platforms - Apple Machine Learning Research</a></h5> <h5><a href="https://blog.google/innovation-and-ai/technology/developers-tools/google-io-2026-collection/" target="_blank">Google I/O 2026: News and announcements</a></h5> <h5><a href="https://www.youtube.com/watch?v=OMhKgQmeMhI" target="_blank">Google I/O 2026 keynote in 35 minutes - YouTube</a></h5> <h5><a href="https://www.theverge.com/tech/933415/google-io-2026-biggest-announcements-ai-gemini" target="_blank">The 13 biggest announcements at Google I/O 2026 | The Verge</a></h5> <h5><a href="https://techcrunch.com/2026/05/19/google-search-as-you-know-it-is-over/" target="_blank">Google Search as you know it is over | TechCrunch</a></h5> <h5><a href="https://www.macstories.net/stories/introducing-shortcuts-playground/" target="_blank">Introducing Shortcuts Playground: Create Apple Shortcuts with Claude Code or Codex - MacStories</a></h5> <h5><a href="https://www.macstories.net/shortcuts-playground/" target="_blank">Shortcuts Playground — Describe it. Build it. Run it.</a></h5> <h5><a href="https://www.bloomberg.com/news/articles/2026-05-18/apple-ios-27-ai-writing-grammar-help-new-shortcuts-app-custom-wallpapers?embedded-checkout=true" target="_blank">Apple iOS 27: AI Writing, Grammar Help; New Shortcuts App; Custom Wallpapers - Bloomberg</a></h5>]]>
+      </content:encoded>
+    </item>
+    <item>
+      <title>603: Ungraded for Style</title>
+      <description/>
+      <pubDate>Thu, 14 May 2026 20:30:00 GMT</pubDate>
+      <enclosure url="https://www.podtrac.com/pts/redirect.mp3/mgln.ai/e/613/pscrb.fm/rss/p/clrtpod.com/m/traffic.libsyn.com/connected/connected603.mp3" length="79555357" type="audio/mp3"/>
+      <link>http://relay.fm/connected/603</link>
+      <guid>http://relay.fm/connected/603</guid>
+      <itunes:title>Ungraded for Style</itunes:title>
+      <itunes:episode>603</itunes:episode>
+      <itunes:author>Federico Viticci, Stephen Hackett, and Myke Hurley</itunes:author>
+      <itunes:subtitle>Gurman has details on iOS 27, Google has new laptops, and Myke has an obligation to skip the third topic this week.</itunes:subtitle>
+      <itunes:summary>Gurman has details on iOS 27, Google has new laptops, and Myke has an obligation to skip the third topic this week.</itunes:summary>
+      <itunes:explicit>clean</itunes:explicit>
+      <itunes:duration>3952</itunes:duration>
+      <content:encoded>
+        <![CDATA[<h4>Subtitle: Topic 3: Myke</h4><p>Gurman has details on iOS 27, Google has new laptops, and Myke has an obligation to skip the third topic this week.</p>
+ <h4>This episode of Connected is sponsored by:</h4> <ul>
+<li><a href="http://fitbod.me/connected">Fitbod</a>: Get stronger, faster with a fitness plan that fits you. Get 25% off your membership.</li>
+<li><a href="https://dockpops.com/connected">DockPops</a>: Organize your Dock like your iPhone. Get 30% off.</li>
+<li><a href="https://mercuryweather.app/connected">Mercury Weather</a>: Forecasts, beautifully done. Download now for free.</li>
+</ul>
+<h4>Links and Show Notes:</h4>  <h5><a href='https://relay.fm/connected/join'>Get Connected Pro: Preshow, postshow, no ads.</a></h5> <h5><a href='https://relay.fm/connected/feedback'>Submit Feedback</a></h5> <h5><a href="https://files.relay.fm/assets/applenewsplus-crossword.png" target="_blank">Triple J — Apple News+</a></h5> <h5><a href="https://techcrunch.com/2026/01/29/apple-hires-iphone-camera-app-halides-co-founder-for-its-design-team/" target="_blank">Apple hires iPhone camera app Halide's co-founder for its design team | TechCrunch</a></h5> <h5><a href="https://www.macrumors.com/2026/03/21/apple-wanted-to-buy-halide-to-boost-iphone-18-pro/" target="_blank">Apple Wanted to Buy Halide to Boost iPhone 18 Pro's Camera App — Now There's a Lawsuit - MacRumors</a></h5> <h5><a href="https://www.theverge.com/business/898687/halide-lawsuit-co-founder-apple" target="_blank">Halide co-founder is suing Sebastiaan de With for taking code to Apple | The Verge</a></h5> <h5><a href="https://www.youtube.com/watch?v=dXCCleAddEA" target="_blank">🎬 Watch The Android Show | I/O Edition 2026 - YouTube</a></h5> <h5><a href="https://blog.google/products-and-platforms/platforms/android/meet-googlebook/" target="_blank">Introducing Googlebook, designed for Gemini Intelligence - Google</a></h5> <h5><a href="https://arstechnica.com/gadgets/2026/05/googles-android-powered-laptops-are-called-googlebooks-and-theyre-coming-this-year/" target="_blank">Google's Android-powered laptops are called Googlebooks, and they're coming this year - Ars Technica</a></h5> <h5><a href="https://arstechnica.com/gadgets/2013/02/googles-new-touchscreen-chromebook-pixel-a-1299-laptop-for-cloud-dwellers/" target="_blank">Google’s new touchscreen Chromebook Pixel: A $1,299 laptop for cloud dwellers - Ars Technica</a></h5>]]>
+      </content:encoded>
+    </item>
+</channel>
+</rss>
