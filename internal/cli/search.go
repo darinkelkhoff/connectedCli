@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"regexp"
 	"strings"
 	"time"
 
@@ -32,16 +34,58 @@ func init() {
 			if jsonOutput {
 				return render.JSON(c.OutOrStdout(), hits)
 			}
-			for _, h := range hits {
-				ep := ""
-				if h.EpisodeNumber > 0 {
-					ep = fmt.Sprintf("#%d ", h.EpisodeNumber)
-				}
-				fmt.Fprintf(c.OutOrStdout(), "%s%s  …%s…\n  %s\n", ep, h.Time, h.Snippet, h.URL)
-			}
+			printSearchHits(c.OutOrStdout(), term, hits)
 			return nil
 		},
 	}
 	cmd.Flags().IntVar(&limit, "limit", 10, "max results")
 	registerCommands = append(registerCommands, cmd)
+}
+
+// printSearchHits renders hits grouped by episode, with the search term
+// highlighted and each timestamp linked (OSC 8) to its deep-link when the
+// output is a terminal.
+func printSearchHits(w io.Writer, term string, hits []podsearch.Hit) {
+	color := colorEnabled(w)
+	highlight := makeHighlighter(term, color)
+
+	lastEp := -1
+	for _, h := range hits {
+		if h.EpisodeInternalID != lastEp {
+			lastEp = h.EpisodeInternalID
+			header := h.EpisodeTitle
+			if h.EpisodeNumber > 0 {
+				header = fmt.Sprintf("#%d %s", h.EpisodeNumber, h.EpisodeTitle)
+			}
+			fmt.Fprintf(w, "\n%s:\n", strings.TrimSpace(header))
+		}
+		ts := h.Time
+		if color {
+			ts = osc8(h.URL, h.Time)
+		}
+		fmt.Fprintf(w, "  %s  … %s …\n", ts, highlight(h.Snippet))
+	}
+}
+
+// makeHighlighter returns a function that wraps case-insensitive occurrences of
+// term in a highlight color. It is a no-op when color is disabled.
+func makeHighlighter(term string, color bool) func(string) string {
+	term = strings.TrimSpace(term)
+	if !color || term == "" {
+		return func(s string) string { return s }
+	}
+	re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(term))
+	if err != nil {
+		return func(s string) string { return s }
+	}
+	return func(s string) string {
+		return re.ReplaceAllStringFunc(s, func(m string) string {
+			return "\033[1;93m" + m + ansiReset
+		})
+	}
+}
+
+// osc8 wraps text in an OSC 8 terminal hyperlink to url.
+func osc8(url, text string) string {
+	return "\033]8;;" + url + "\033\\" + text + "\033]8;;\033\\"
 }
