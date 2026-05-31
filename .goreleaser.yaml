@@ -1,0 +1,25 @@
+version: 2
+project_name: conctl
+builds:
+  - id: conctl
+    main: ./cmd/conctl
+    binary: conctl
+    env: [CGO_ENABLED=0]
+    goos: [darwin]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X github.com/dkelkhoff/connectedCli/internal/cli.Version={{.Version}}
+archives:
+  - formats: [tar.gz]
+brews:
+  - name: conctl
+    repository:
+      owner: dkelkhoff
+      name: homebrew-tap
+    homepage: "https://github.com/dkelkhoff/connectedCli"
+    description: "A command-line companion for the Connected podcast"
+    dependencies:
+      - name: ffmpeg
+        type: optional
+    test: |
+      system "#{bin}/conctl", "--version"
