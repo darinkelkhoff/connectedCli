@@ -58,7 +58,9 @@ func emitChapter(ctx context.Context, c *cobra.Command, ep feed.Episode, ch chap
 	}
 
 	if mode.useLLM {
+		stop := startSpinner(fmt.Sprintf("Generating %s with your local AI…", mode.prompt))
 		gen, provider, err := llm.Generate(ctx, mode.prompt, text, "")
+		stop()
 		if err != nil {
 			return err
 		}
