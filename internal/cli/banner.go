@@ -7,11 +7,14 @@ import (
 	"strings"
 )
 
-// wordmark is the "conctl" block-letter logo (ANSI Shadow style), one entry per row.
+// wordmark is the "conctl" block-letter logo (ANSI Shadow style), one entry per
+// row. Seven rows tall: six solid body rows plus the shadow row, so the gradient
+// reaches a full solid row of blue before the blue shadow.
 var wordmark = []string{
 	` ██████╗   ██████╗   ███╗   ██╗   ██████╗  ████████╗  ██╗     `,
 	`██╔════╝  ██╔═══██╗  ████╗  ██║  ██╔════╝  ╚══██╔══╝  ██║     `,
 	`██║       ██║   ██║  ██╔██╗ ██║  ██║          ██║     ██║     `,
+	`██║       ██║   ██║  ██║╚██╗██║  ██║          ██║     ██║     `,
 	`██║       ██║   ██║  ██║╚██╗██║  ██║          ██║     ██║     `,
 	`╚██████╗  ╚██████╔╝  ██║ ╚████║  ╚██████╗     ██║     ███████╗`,
 	` ╚═════╝   ╚═════╝   ╚═╝  ╚═══╝   ╚═════╝     ╚═╝     ╚══════╝`,
@@ -26,15 +29,16 @@ const (
 	ansiBlue  = "\033[94m"
 )
 
-// wordmarkGradient colors the six wordmark rows top-to-bottom:
-// green, yellow, orange, red, purple, blue (256-color for a true orange/purple).
+// wordmarkGradient colors the seven wordmark rows top-to-bottom:
+// green, yellow, orange, red, purple, blue (solid), blue (shadow).
 var wordmarkGradient = []string{
 	"\033[38;5;46m",  // green
 	"\033[38;5;226m", // yellow
 	"\033[38;5;208m", // orange
 	"\033[38;5;196m", // red
 	"\033[38;5;129m", // purple
-	"\033[38;5;33m",  // blue
+	"\033[38;5;33m",  // blue (solid row)
+	"\033[38;5;33m",  // blue (shadow)
 }
 
 // colorEnabled reports whether w is a real terminal and color isn't suppressed.
