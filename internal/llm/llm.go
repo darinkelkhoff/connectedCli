@@ -48,6 +48,9 @@ func DefaultProviders() []Provider {
 		cliProvider{name: "codex", bin: "codex", args: func(p string) []string {
 			return []string{"exec", p}
 		}},
+		cliProvider{name: "opencode", bin: "opencode", args: func(p string) []string {
+			return []string{"run", p}
+		}},
 	}
 }
 
@@ -60,7 +63,7 @@ func selectProvider(providers []Provider, force string) (Provider, error) {
 			return p, nil
 		}
 	}
-	return nil, fmt.Errorf("no local AI CLI found (looked for: claude, codex). Install one, or skip --llm")
+	return nil, fmt.Errorf("no local AI CLI found (looked for: claude, codex, opencode). Install one, or skip --llm")
 }
 
 // Generate runs a preset prompt against the first available provider.
