@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 	"time"
@@ -86,25 +87,175 @@ func init() {
 		RunE: func(c *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 			defer cancel()
-			m, err := rickies.FetchGames(ctx)
+			index, err := rickies.FetchGameIndex(ctx)
 			if err != nil {
 				return err
 			}
-			names := make([]string, 0, len(m))
-			for k := range m {
-				names = append(names, k)
+			if jsonOutput {
+				sort.Slice(index, func(i, j int) bool { return index[i].Name < index[j].Name })
+				return render.JSON(c.OutOrStdout(), index)
+			}
+			names := make([]string, 0, len(index))
+			for _, g := range index {
+				names = append(names, g.Name)
 			}
 			sort.Strings(names)
-			if jsonOutput {
-				return render.JSON(c.OutOrStdout(), names)
-			}
+			out := c.OutOrStdout()
+			fmt.Fprintf(out, "%d Rickies games (use `conctl rickies game <name>` for one):\n", len(names))
 			for _, n := range names {
-				fmt.Fprintln(c.OutOrStdout(), n)
+				fmt.Fprintf(out, "  %s\n", n)
 			}
 			return nil
 		},
 	}
 
-	root.AddCommand(titles, games)
+	game := &cobra.Command{
+		Use:   "game <name>",
+		Short: "Show one Rickies game: picks, who made them, and how they scored",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(c *cobra.Command, args []string) error {
+			query := strings.Join(args, " ")
+			ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+			defer cancel()
+			index, err := rickies.FetchGameIndex(ctx)
+			if err != nil {
+				return err
+			}
+			ref, err := matchGame(index, query)
+			if err != nil {
+				return err
+			}
+			g, err := rickies.FetchGame(ctx, ref.Path)
+			if err != nil {
+				return err
+			}
+			if jsonOutput {
+				return render.JSON(c.OutOrStdout(), g)
+			}
+			out := c.OutOrStdout()
+			color := colorEnabled(out)
+			fmt.Fprintf(out, "%s — %s\n", g.Name, g.GameType)
+			fmt.Fprintf(out, "Picked %s · Graded %s\n", g.DatePicked, g.DateGraded)
+			renderSubGame(out, "Main Game", g.MainGame, color)
+			renderSubGame(out, "The Flexies", g.Flexies, color)
+			return nil
+		},
+	}
+
+	root.AddCommand(titles, games, game)
 	registerCommands = append(registerCommands, root)
+}
+
+// matchGame resolves a query to a single game: exact (case-insensitive) match
+// wins; otherwise a unique case-insensitive substring match; otherwise an error.
+func matchGame(index []rickies.GameRef, query string) (rickies.GameRef, error) {
+	q := strings.ToLower(strings.TrimSpace(query))
+	var partial []rickies.GameRef
+	for _, g := range index {
+		name := strings.ToLower(g.Name)
+		if name == q {
+			return g, nil
+		}
+		if strings.Contains(name, q) {
+			partial = append(partial, g)
+		}
+	}
+	switch len(partial) {
+	case 0:
+		return rickies.GameRef{}, fmt.Errorf("no Rickies game matching %q (see `conctl rickies games`)", query)
+	case 1:
+		return partial[0], nil
+	default:
+		names := make([]string, 0, len(partial))
+		for _, g := range partial {
+			names = append(names, g.Name)
+		}
+		sort.Strings(names)
+		return rickies.GameRef{}, fmt.Errorf("%q matches %d games — be more specific: %s", query, len(partial), strings.Join(names, "; "))
+	}
+}
+
+// mark returns a colored ✓/✗ for a hit/miss.
+func mark(hit, color bool) string {
+	if hit {
+		if color {
+			return "\033[92m✓" + ansiReset
+		}
+		return "✓"
+	}
+	if color {
+		return "\033[91m✗" + ansiReset
+	}
+	return "✗"
+}
+
+// scoreLine formats a sub-game's per-host scores (main games show points; the
+// flexies show correct/total).
+func scoreLine(scores []rickies.HostScore) string {
+	parts := make([]string, 0, len(scores))
+	for _, s := range scores {
+		if s.Total > 0 {
+			parts = append(parts, fmt.Sprintf("%s %d/%d", s.Host, s.Correct, s.Total))
+		} else {
+			parts = append(parts, fmt.Sprintf("%s %d", s.Host, s.Score))
+		}
+	}
+	return strings.Join(parts, " · ")
+}
+
+// renderSubGame prints one round (main game or flexies): winner, scores, and the
+// picks grouped by host with a ✓/✗ for each.
+func renderSubGame(out io.Writer, title string, sg rickies.SubGame, color bool) {
+	if len(sg.Picks) == 0 && len(sg.Scores) == 0 {
+		return
+	}
+	fmt.Fprintf(out, "\n%s", title)
+	if sg.Winner != "" {
+		fmt.Fprintf(out, " — Winner: %s", sg.Winner)
+	}
+	fmt.Fprintln(out)
+	if len(sg.Scores) > 0 {
+		fmt.Fprintf(out, "  %s\n", scoreLine(sg.Scores))
+	}
+
+	// Group picks by host, ordered by the scores list (ranked), then any extras.
+	byHost := map[string][]rickies.Pick{}
+	for _, p := range sg.Picks {
+		byHost[p.Host] = append(byHost[p.Host], p)
+	}
+	var order []string
+	seen := map[string]bool{}
+	for _, s := range sg.Scores {
+		if !seen[s.Host] {
+			order = append(order, s.Host)
+			seen[s.Host] = true
+		}
+	}
+	for _, p := range sg.Picks {
+		if !seen[p.Host] {
+			order = append(order, p.Host)
+			seen[p.Host] = true
+		}
+	}
+	for _, h := range order {
+		ps := byHost[h]
+		if len(ps) == 0 {
+			continue
+		}
+		fmt.Fprintf(out, "\n  %s\n", h)
+		for _, p := range ps {
+			fmt.Fprintf(out, "    %s %s\n", mark(p.Hit(), color), p.Text)
+		}
+	}
+
+	if sg.CharityName != "" {
+		line := "Charity: " + sg.CharityName
+		if sg.Donation > 0 {
+			line = fmt.Sprintf("Charity: $%d to %s", sg.Donation, sg.CharityName)
+		}
+		if sg.Donator != "" {
+			line += fmt.Sprintf(" (donated by %s)", sg.Donator)
+		}
+		fmt.Fprintf(out, "\n  %s\n", line)
+	}
 }
