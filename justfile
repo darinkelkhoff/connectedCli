@@ -16,4 +16,8 @@ test:
 
 # Remove build artifacts
 kill:
-    -rm -rf bin
+    -rm -rf bin dist
+
+# Cut a release (builds, signs, notarizes, publishes, updates the cask)
+release:
+    ./scripts/release.sh
