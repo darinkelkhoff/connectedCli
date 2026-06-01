@@ -126,11 +126,16 @@ Add `--json` for `{episodeNumber, episodeTitle, time, seconds, snippet, url}` ob
 conctl reads the [rickies.net](https://rickies.net/) API:
 
 ```bash
-conctl rickies                 # Annual Chairman, Keynote Chairman, and each host's titles
+conctl rickies                 # a Bill-of-Rickies banner + current chairmen & titles
+conctl rickies bill            # the full current Bill of Rickies (the rules)
 conctl rickies titles Stephen  # one host's titles
 conctl rickies games           # every Rickies game, 2017 -> today
 conctl rickies game "2026 March"   # one game in detail
 ```
+
+`rickies bill` reconstructs the **current** rules from the date-versioned
+[Bill of Rickies](https://rickies.co/billof) — keeping only the rules (and inline
+edits) in force today.
 
 `rickies game <name>` shows the main round and the flexies for a game — the
 winner, each host's score, and every pick grouped by host with a ✓/✗ for whether
