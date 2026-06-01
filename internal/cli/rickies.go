@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dkelkhoff/connectedCli/internal/render"
-	"github.com/dkelkhoff/connectedCli/internal/rickies"
+	"github.com/darinkelkhoff/connectedCli/internal/audio"
+	"github.com/darinkelkhoff/connectedCli/internal/render"
+	"github.com/darinkelkhoff/connectedCli/internal/rickies"
 	"github.com/spf13/cobra"
 )
 
@@ -174,11 +175,16 @@ func init() {
 
 	var listVersions bool
 	var version string
+	var sayBill bool
 	bill := &cobra.Command{
 		Use:   "bill",
 		Short: "Print the Bill of Rickies (current rules, or a past version)",
 		RunE: func(c *cobra.Command, _ []string) error {
-			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			timeout := 20 * time.Second
+			if sayBill {
+				timeout = time.Hour // reading the whole bill aloud takes a while
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			htmlStr, err := rickies.FetchBillHTML(ctx)
 			if err != nil {
@@ -219,11 +225,15 @@ func init() {
 			if jsonOutput {
 				return render.JSON(out, entries)
 			}
+			if sayBill {
+				return audio.Say(ctx, billSpeech(entries))
+			}
 			printBill(out, entries, colorEnabled(out))
 			return nil
 		},
 	}
 	bill.Flags().BoolVar(&listVersions, "versions", false, "list the bill's edition history instead of printing it")
+	bill.Flags().BoolVar(&sayBill, "say", false, "read the bill aloud via macOS say")
 	bill.Flags().StringVar(&version, "version", "", "print a past edition by slug or index (see --versions)")
 
 	billDiff := &cobra.Command{
@@ -289,6 +299,16 @@ func init() {
 
 	root.AddCommand(titles, games, game, bill)
 	registerCommands = append(registerCommands, root)
+}
+
+// billSpeech joins the bill entries into TTS-friendly text (one per line).
+func billSpeech(entries []rickies.BillEntry) string {
+	var b strings.Builder
+	for _, e := range entries {
+		b.WriteString(e.Text)
+		b.WriteString("\n")
+	}
+	return b.String()
 }
 
 // printBill renders the bill: headings (bold, spaced) and bulleted rules.

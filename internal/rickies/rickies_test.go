@@ -121,8 +121,10 @@ func TestParseBillVersions(t *testing.T) {
 	if v0.Date != "January 4, 2017" {
 		t.Errorf("display date wrong: %q", v0.Date)
 	}
-	if v0.Unix() <= 0 {
-		t.Errorf("Unix() should be positive: %d", v0.Unix())
+	// Unix() must use the site's slider value (rickies_event_values), not a
+	// noon-of-date guess, so boundary editions filter correctly.
+	if v0.Value != 1483488000 || v0.Unix() != 1483488000 {
+		t.Errorf("slider value not used: Value=%d Unix=%d", v0.Value, v0.Unix())
 	}
 
 	// Match by slug, index, and unique substring.

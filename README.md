@@ -130,6 +130,8 @@ conctl rickies                 # a Bill-of-Rickies banner + current chairmen & t
 conctl rickies bill            # the full current Bill of Rickies (the rules)
 conctl rickies bill --versions # list every past edition of the bill (since 2017)
 conctl rickies bill --version annual-2017   # print a past edition
+conctl rickies bill diff annual-2017 annual-2018   # diff two editions
+conctl rickies bill --say      # read the bill aloud (macOS say)
 conctl rickies titles Stephen  # one host's titles
 conctl rickies games           # every Rickies game, 2017 -> today
 conctl rickies game "2026 March"   # one game in detail
@@ -238,8 +240,8 @@ goreleaser release --clean      # needs GITHUB_TOKEN with repo scope
 ```
 
 This publishes macOS binaries to a GitHub Release and updates the Homebrew
-formula in the `dkelkhoff/homebrew-tap` repo. Users then
-`brew install dkelkhoff/tap/conctl`.
+formula in the `darinkelkhoff/homebrew-tap` repo. Users then
+`brew install darinkelkhoff/tap/conctl`.
 
 ## Credits
 

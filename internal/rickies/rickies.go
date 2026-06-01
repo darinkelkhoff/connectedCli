@@ -326,10 +326,15 @@ type BillVersion struct {
 	Name     string `json:"name"`
 	Date     string `json:"date"`     // display form, e.g. "January 4, 2017"
 	Datetime string `json:"datetime"` // ISO form, e.g. "2017-01-04"
+	Value    int64  `json:"-"`        // the slider's filter timestamp (rickies_event_values)
 }
 
-// Unix returns a timestamp at noon on the version's date, suitable for ParseBill.
+// Unix returns the timestamp ParseBill should filter on for this edition — the
+// site's own slider value when available, else noon on the version's date.
 func (v BillVersion) Unix() int64 {
+	if v.Value > 0 {
+		return v.Value
+	}
 	t, err := time.Parse("2006-01-02", v.Datetime)
 	if err != nil {
 		return 0
@@ -338,13 +343,25 @@ func (v BillVersion) Unix() int64 {
 }
 
 var (
-	billNamesArrRe = regexp.MustCompile(`(?s)rickies_event_names\s*=\s*\[(.*?)\]`)
-	billDatesArrRe = regexp.MustCompile(`(?s)rickies_event_dates\s*=\s*\[(.*?)\]`)
-	billUrlsArrRe  = regexp.MustCompile(`(?s)rickies_event_urls\s*=\s*\[(.*?)\]`)
-	jsStringRe     = regexp.MustCompile(`'((?:\\.|[^'])*)'`)
-	billDatetimeRe = regexp.MustCompile(`datetime="([^"]+)"`)
-	billTimeTextRe = regexp.MustCompile(`(?s)<time[^>]*>(.*?)</time>`)
+	billNamesArrRe  = regexp.MustCompile(`(?s)rickies_event_names\s*=\s*\[(.*?)\]`)
+	billDatesArrRe  = regexp.MustCompile(`(?s)rickies_event_dates\s*=\s*\[(.*?)\]`)
+	billUrlsArrRe   = regexp.MustCompile(`(?s)rickies_event_urls\s*=\s*\[(.*?)\]`)
+	billValuesArrRe = regexp.MustCompile(`(?s)rickies_event_values\s*=\s*\[(.*?)\]`)
+	jsStringRe      = regexp.MustCompile(`'((?:\\.|[^'])*)'`)
+	billDatetimeRe  = regexp.MustCompile(`datetime="([^"]+)"`)
+	billTimeTextRe  = regexp.MustCompile(`(?s)<time[^>]*>(.*?)</time>`)
 )
+
+// jsTimestampArray reads an array of (possibly quoted) integer timestamps.
+func jsTimestampArray(htmlStr string, re *regexp.Regexp) []int64 {
+	var out []int64
+	for _, s := range jsStringArray(htmlStr, re) {
+		if n, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64); err == nil {
+			out = append(out, n)
+		}
+	}
+	return out
+}
 
 func jsStringArray(htmlStr string, re *regexp.Regexp) []string {
 	m := re.FindStringSubmatch(htmlStr)
@@ -363,6 +380,7 @@ func ParseBillVersions(htmlStr string) []BillVersion {
 	names := jsStringArray(htmlStr, billNamesArrRe)
 	dates := jsStringArray(htmlStr, billDatesArrRe)
 	urls := jsStringArray(htmlStr, billUrlsArrRe)
+	values := jsTimestampArray(htmlStr, billValuesArrRe)
 	n := len(urls)
 	if len(names) < n {
 		n = len(names)
@@ -373,6 +391,9 @@ func ParseBillVersions(htmlStr string) []BillVersion {
 	versions := make([]BillVersion, 0, n)
 	for i := 0; i < n; i++ {
 		v := BillVersion{Index: i, Slug: urls[i], Name: cleanBillText(names[i])}
+		if i < len(values) {
+			v.Value = values[i]
+		}
 		if dm := billDatetimeRe.FindStringSubmatch(dates[i]); dm != nil {
 			v.Datetime = dm[1]
 		}
