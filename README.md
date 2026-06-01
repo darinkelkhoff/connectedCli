@@ -2,17 +2,6 @@
 
 A command-line companion app for the [Connected](https://relay.fm/connected) podcast.  Built for fans, hosts, AI agents, and mostly just because Stephen mentioned it as a joke once.
 
-```text
- ██████╗   ██████╗   ███╗   ██╗   ██████╗  ████████╗  ██╗
-██╔════╝  ██╔═══██╗  ████╗  ██║  ██╔════╝  ╚══██╔══╝  ██║
-██║       ██║   ██║  ██╔██╗ ██║  ██║          ██║     ██║
-██║       ██║   ██║  ██║╚██╗██║  ██║          ██║     ██║
-██║       ██║   ██║  ██║╚██╗██║  ██║          ██║     ██║
-╚██████╗  ╚██████╔╝  ██║ ╚████║  ╚██████╗     ██║     ███████╗
- ╚═════╝   ╚═════╝   ╚═╝  ╚═══╝   ╚═════╝     ╚═╝     ╚══════╝
-                     The Connected CLI
-```
-
 `conctl` can search the show's unofficial transcripts, print lists of chapters, dump show notes, track the Rickies, and more.  
 
 It was inspired by Stephen saying "`connected --exit`" on [episode 605](https://relay.fm/connected/605), after hearing about [remctl](https://www.macstories.net/stories/introducing-remctl-the-power-user-reminders-cli-for-macos-and-ai-agents/). Like `remctl`, `conctl` produces human-readable terminal output by default, but can also produce JSON for agents to consume.  
