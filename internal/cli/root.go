@@ -59,6 +59,7 @@ func NewRootCmd() *cobra.Command {
 	// no-argument banner, not in help).
 	root.SetHelpTemplate("{{.UsageString}}")
 	root.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit structured JSON for agents")
+	root.CompletionOptions.HiddenDefaultCmd = true
 
 	for _, c := range registerCommands {
 		root.AddCommand(c)

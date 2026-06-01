@@ -187,6 +187,30 @@ A ready-to-use agent guide — with the full `--json` schemas, caveats, and `jq`
 - **`--play`** uses `afplay` (built into macOS) for full-episode playback, with no extra dependencies. Chapter and segment playback (`intro --play`, `exit --play`, `play --chapter N`) needs `ffplay` or `ffmpeg` — `brew install ffmpeg` gets you both. The Homebrew formula declares `ffmpeg` as an optional dependency. All other modes are dependency-free (`say` is built into macOS).
 - **`--llm` needs a local agent CLI** (`claude` or `codex`); otherwise it prints a friendly "no local AI found" message.
 
+## Shell Completions
+
+`conctl` can generate tab-completion scripts for your shell. The command is hidden from the help output since most people don't need it, but it's there:
+
+**zsh**
+```zsh
+mkdir -p ~/.zsh/completions
+conctl completion zsh > ~/.zsh/completions/_conctl
+# add to ~/.zshrc if not already present:
+# fpath=(~/.zsh/completions $fpath) && autoload -U compinit && compinit
+```
+
+**bash**
+```bash
+conctl completion bash > /usr/local/etc/bash_completion.d/conctl   # macOS (brew install bash-completion)
+# or for a per-user install:
+conctl completion bash >> ~/.bash_profile
+```
+
+**fish**
+```fish
+conctl completion fish > ~/.config/fish/completions/conctl.fish
+```
+
 ## Development
 Building from source, project layout, and the release process live in [DEVELOPMENT.md](DEVELOPMENT.md).
 
