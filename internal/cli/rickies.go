@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -25,7 +26,7 @@ func formatTitles(titles []string) string {
 func init() {
 	root := &cobra.Command{
 		Use:   "rickies",
-		Short: "Current Rickies chairmen, titles, and standings",
+		Short: "The Rickies: a banner, current chairmen, titles, and the bill",
 		RunE: func(c *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
@@ -37,6 +38,12 @@ func init() {
 				return render.JSON(c.OutOrStdout(), w)
 			}
 			out := c.OutOrStdout()
+			// Small banner: the opening line of the current Bill of Rickies.
+			if entries, berr := rickies.FetchBill(ctx, time.Now().Unix()); berr == nil {
+				if para := rickies.FirstParagraph(entries); para != "" {
+					fmt.Fprintf(out, "%s\n\n", para)
+				}
+			}
 			fmt.Fprintf(out, "Annual Chairman:  %s (%s, %s)\n", w.Annual.Winner, w.Annual.GameName, w.Annual.Date)
 			fmt.Fprintf(out, "Keynote Chairman: %s (%s, %s)\n", w.Keynote.Winner, w.Keynote.GameName, w.Keynote.Date)
 			fmt.Fprintln(out, "\nTitles:")
@@ -48,6 +55,7 @@ func init() {
 			for _, h := range hosts {
 				fmt.Fprintf(out, "  %s: %s\n", h, formatTitles(w.Titles[h]))
 			}
+			fmt.Fprintln(out, "\nFull Bill of Rickies: conctl rickies bill")
 			return nil
 		},
 	}
@@ -142,8 +150,47 @@ func init() {
 		},
 	}
 
-	root.AddCommand(titles, games, game)
+	bill := &cobra.Command{
+		Use:   "bill",
+		Short: "Print the full Bill of Rickies (the current rules)",
+		RunE: func(c *cobra.Command, _ []string) error {
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cancel()
+			entries, err := rickies.FetchBill(ctx, time.Now().Unix())
+			if err != nil {
+				return err
+			}
+			if len(entries) == 0 {
+				return errors.New("could not read the Bill of Rickies")
+			}
+			if jsonOutput {
+				return render.JSON(c.OutOrStdout(), entries)
+			}
+			printBill(c.OutOrStdout(), entries, colorEnabled(c.OutOrStdout()))
+			return nil
+		},
+	}
+
+	root.AddCommand(titles, games, game, bill)
 	registerCommands = append(registerCommands, root)
+}
+
+// printBill renders the bill: headings (bold, spaced) and bulleted rules.
+func printBill(out io.Writer, entries []rickies.BillEntry, color bool) {
+	for i, e := range entries {
+		if e.Heading {
+			if i > 0 {
+				fmt.Fprintln(out)
+			}
+			h := strings.ToUpper(e.Text)
+			if color {
+				h = ansiBold + h + ansiReset
+			}
+			fmt.Fprintf(out, "%s\n", h)
+		} else {
+			fmt.Fprintf(out, "  • %s\n", e.Text)
+		}
+	}
 }
 
 // matchGame resolves a query to a single game: exact (case-insensitive) match

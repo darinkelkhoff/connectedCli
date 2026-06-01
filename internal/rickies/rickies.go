@@ -4,12 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 )
 
 const BaseURL = "https://rickies.net/api/v1"
+
+// BillURL redirects to the current Bill of Rickies (on rickies.co).
+const BillURL = "https://rickies.co/billof"
 
 // Award is a won title (chairman, flexie, etc.).
 type Award struct {
@@ -172,4 +179,103 @@ func FetchGame(ctx context.Context, path string) (Game, error) {
 		return Game{}, err
 	}
 	return ParseGame(data)
+}
+
+// BillEntry is one line of the Bill of Rickies — a section heading or a rule.
+type BillEntry struct {
+	Heading bool   `json:"heading"`
+	Text    string `json:"text"`
+}
+
+// The bill page (a date-versioned document) marks section headings with
+// class="rule_type" and each rule as <div class="rule" data-start-date data-end-date><p>…</p>.
+// Only rules whose [start,end] window contains "now" are currently in force.
+var (
+	billHeadingRe = regexp.MustCompile(`(?s)<h[1-4][^>]*class="rule_type[^"]*"[^>]*>(.*?)</h[1-4]>`)
+	billRuleRe    = regexp.MustCompile(`(?s)data-start-date="(\d+)"[^>]*data-end-date="(\d+)"[^>]*>\s*<p>(.*?)</p>`)
+	billTagRe     = regexp.MustCompile(`<[^>]*>`)
+	billWsRe      = regexp.MustCompile(`\s+`)
+	// Inline rule edits live in date-tagged <span>s; only those in force at
+	// "now" should survive (expired/removed wording has a past end-date).
+	billDatedSpanRe = regexp.MustCompile(`(?s)<span[^>]*data-start-date="(\d+)"[^>]*data-end-date="(\d+)"[^>]*>(.*?)</span>`)
+)
+
+func cleanBillText(s string) string {
+	s = billTagRe.ReplaceAllString(s, "")
+	s = html.UnescapeString(s)
+	return strings.TrimSpace(billWsRe.ReplaceAllString(s, " "))
+}
+
+// resolveRuleText drops date-tagged spans that aren't in force at `now` (the
+// page's inline edit history), then cleans the remaining text.
+func resolveRuleText(s string, now int64) string {
+	s = billDatedSpanRe.ReplaceAllStringFunc(s, func(m string) string {
+		g := billDatedSpanRe.FindStringSubmatch(m)
+		start, _ := strconv.ParseInt(g[1], 10, 64)
+		end, _ := strconv.ParseInt(g[2], 10, 64)
+		if now < start || now > end {
+			return ""
+		}
+		return g[3]
+	})
+	return cleanBillText(s)
+}
+
+// ParseBill extracts the current Bill of Rickies (headings + rules in force at
+// `now`, a Unix timestamp) from the page HTML, in document order.
+func ParseBill(htmlStr string, now int64) []BillEntry {
+	type located struct {
+		pos   int
+		entry BillEntry
+	}
+	var items []located
+	for _, m := range billHeadingRe.FindAllStringSubmatchIndex(htmlStr, -1) {
+		if text := cleanBillText(htmlStr[m[2]:m[3]]); text != "" {
+			items = append(items, located{m[0], BillEntry{Heading: true, Text: text}})
+		}
+	}
+	for _, m := range billRuleRe.FindAllStringSubmatchIndex(htmlStr, -1) {
+		start, _ := strconv.ParseInt(htmlStr[m[2]:m[3]], 10, 64)
+		end, _ := strconv.ParseInt(htmlStr[m[4]:m[5]], 10, 64)
+		if now < start || now > end {
+			continue
+		}
+		if text := resolveRuleText(htmlStr[m[6]:m[7]], now); text != "" {
+			items = append(items, located{m[0], BillEntry{Heading: false, Text: text}})
+		}
+	}
+	sort.SliceStable(items, func(i, j int) bool { return items[i].pos < items[j].pos })
+	out := make([]BillEntry, len(items))
+	for i, it := range items {
+		out[i] = it.entry
+	}
+	return out
+}
+
+// FirstParagraph returns the first rule (non-heading) entry's text, for a banner.
+func FirstParagraph(entries []BillEntry) string {
+	for _, e := range entries {
+		if !e.Heading {
+			return e.Text
+		}
+	}
+	return ""
+}
+
+// FetchBill downloads and parses the current Bill of Rickies.
+func FetchBill(ctx context.Context, now int64) ([]BillEntry, error) {
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, BillURL, nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("bill: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bill: status %d", resp.StatusCode)
+	}
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBill(string(data), now), nil
 }

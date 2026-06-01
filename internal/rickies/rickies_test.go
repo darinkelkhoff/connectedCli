@@ -72,6 +72,39 @@ func TestParseGame(t *testing.T) {
 	}
 }
 
+func TestParseBill(t *testing.T) {
+	data, err := os.ReadFile("testdata/bill_sample.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// now=5000 is past rule2's end (2000) but within the others.
+	entries := ParseBill(string(data), 5000)
+	if len(entries) != 5 {
+		t.Fatalf("expected 5 entries (rule2 filtered), got %d: %+v", len(entries), entries)
+	}
+	if !entries[0].Heading || entries[0].Text != "The Rickies" {
+		t.Errorf("first entry should be 'The Rickies' heading: %+v", entries[0])
+	}
+	for _, e := range entries {
+		if strings.Contains(e.Text, "OLD expired") {
+			t.Errorf("expired rule leaked: %+v", e)
+		}
+	}
+	if got := FirstParagraph(entries); got != "The Rickies is a game Connected hosts play." {
+		t.Errorf("FirstParagraph wrong: %q", got)
+	}
+	// Entities decoded.
+	found := false
+	for _, e := range entries {
+		if e.Text == "There are two types: Annual & Keynote." {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("entity-decoded rule not found")
+	}
+}
+
 func TestParseEpisodes(t *testing.T) {
 	data, err := os.ReadFile("testdata/episodes.json")
 	if err != nil {
