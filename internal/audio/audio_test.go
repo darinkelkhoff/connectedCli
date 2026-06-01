@@ -1,17 +1,15 @@
 package audio
 
 import (
-	"strings"
 	"testing"
 )
 
-func TestFfplayArgs(t *testing.T) {
-	args := ffplayArgs("http://x/a.mp3", 90, 30)
-	joined := strings.Join(args, " ")
-	if !strings.Contains(joined, "-ss 90") || !strings.Contains(joined, "-t 30") {
-		t.Fatalf("args missing seek/duration: %v", args)
+func TestFfmpegAudioOutputArgs(t *testing.T) {
+	args := ffmpegAudioOutputArgs()
+	if len(args) < 2 {
+		t.Fatalf("expected at least 2 args, got %v", args)
 	}
-	if !strings.Contains(joined, "-nodisp") {
-		t.Fatalf("expected -nodisp: %v", args)
+	if args[0] != "-f" {
+		t.Errorf("expected first arg to be -f, got %q", args[0])
 	}
 }

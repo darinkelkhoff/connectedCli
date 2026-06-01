@@ -1,20 +1,23 @@
 package cli
 
 import (
-	"bytes"
-	"strings"
 	"testing"
 )
 
-func TestExitShort(t *testing.T) {
-	var out bytes.Buffer
-	if err := runShortExit(&out); err != nil {
-		t.Fatal(err)
+func TestFirstSentence(t *testing.T) {
+	cases := []struct {
+		input, want string
+	}{
+		{"Hello and welcome to Connected episode 601.", "Hello and welcome to Connected episode 601."},
+		{"First sentence. Second sentence.", "First sentence."},
+		{"No punctuation", "No punctuation"},
+		{"  Leading spaces. More.", "Leading spaces."},
+		{"Ends with question? More text.", "Ends with question?"},
+		{"Exclaim! More.", "Exclaim!"},
 	}
-	got := out.String()
-	for _, want := range []string{"Arrivederci", "Cheerio", "Bye"} {
-		if !strings.Contains(got, want) {
-			t.Errorf("short exit missing %q: %s", want, got)
+	for _, c := range cases {
+		if got := firstSentence(c.input); got != c.want {
+			t.Errorf("firstSentence(%q) = %q, want %q", c.input, got, c.want)
 		}
 	}
 }
