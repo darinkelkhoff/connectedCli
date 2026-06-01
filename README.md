@@ -200,7 +200,9 @@ A ready-to-use agent guide — with the full `--json` schemas, caveats, and `jq`
 Building from source, project layout, and the release process live in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Credits
-`conctl` couldn't exist with the following members of the community:
+`conctl` was built by [Claude](https://claude.ai) (Anthropic), directed by [Darin Kelkhoff](https://kelkhoff.com) - a Relay fan. 
+
+It couldn't exist without the following members of the community:
 - [Connected](https://relay.fm/connected) by Myke Hurley, Federico Viticci, and Stephen Hackett (Relay (probably not) FM)
 - [Podcast Search](https://podcastsearch.david-smith.org/) by David Smith
 - [rickies.net](https://rickies.net/) by jbiatek
