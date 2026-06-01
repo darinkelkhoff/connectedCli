@@ -30,6 +30,16 @@ func PlaySegment(ctx context.Context, url string, startSec, durSec int) error {
 	return cmd.Run()
 }
 
+// Play streams an entire URL from the start via ffplay.
+func Play(ctx context.Context, url string) error {
+	if _, err := exec.LookPath("ffplay"); err != nil {
+		return errors.New("ffplay not found — install ffmpeg (brew install ffmpeg) to use --play")
+	}
+	cmd := exec.CommandContext(ctx, "ffplay", "-nodisp", "-autoexit", "-loglevel", "error", url)
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	return cmd.Run()
+}
+
 // Say speaks text via the macOS `say` command.
 func Say(ctx context.Context, text string) error {
 	if _, err := exec.LookPath("say"); err != nil {

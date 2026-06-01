@@ -21,7 +21,7 @@ const rundown = `Chapters:
   Intro            conctl --intro            the cold open
   Follow-up        conctl search <query>     search the transcripts
   Topics           conctl chapters [ep]      list an episode's chapters
-                   conctl play [ep]          play a chapter
+                   conctl play [ep]          play an episode (or a chapter)
   The Rickies      conctl rickies            current chairmen & standings
   Show Notes       conctl notes [ep]         links & summary for an episode
   Closing          conctl --exit             the sign-off`
