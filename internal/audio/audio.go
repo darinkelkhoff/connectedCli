@@ -4,8 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 	"runtime"
 	"strconv"
 	"strings"
@@ -55,14 +59,8 @@ func PlaySegment(ctx context.Context, url string, startSec, durSec int) error {
 }
 
 // Play streams an entire URL from the start.
-// Tries afplay first (macOS built-in), then ffplay, then ffmpeg.
+// Tries ffplay, then ffmpeg, then downloads to a temp file and plays with afplay.
 func Play(ctx context.Context, url string) error {
-	if _, ok := lookPath("afplay"); ok {
-		cmd := exec.CommandContext(ctx, "afplay", url)
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-		return cmd.Run()
-	}
-
 	if _, ok := lookPath("ffplay"); ok {
 		cmd := exec.CommandContext(ctx, "ffplay",
 			"-nodisp", "-autoexit", "-loglevel", "error", url)
@@ -77,7 +75,48 @@ func Play(ctx context.Context, url string) error {
 		return cmd.Run()
 	}
 
-	return errors.New("afplay/ffplay/ffmpeg not found — install ffmpeg (brew install ffmpeg) to use --play")
+	if _, ok := lookPath("afplay"); ok {
+		return downloadAndPlay(ctx, url)
+	}
+
+	return errors.New("ffplay, ffmpeg, or afplay not found — install ffmpeg (brew install ffmpeg) to use --play")
+}
+
+// downloadAndPlay downloads url to a temp file and plays it with afplay.
+// afplay cannot stream from podcast CDN URLs directly, so we fetch first.
+func downloadAndPlay(ctx context.Context, url string) error {
+	// Catch SIGINT so the context is cancelled instead of the process being killed
+	// abruptly — this lets defers run and the temp file get cleaned up.
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	fmt.Fprintln(os.Stderr, "ffplay/ffmpeg not found — downloading episode to tmp file (which will be auto-removed) for afplay...")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	tmp, err := os.CreateTemp("", "conctl-*.mp3")
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+	defer os.Remove(tmp.Name())
+
+	if _, err := io.Copy(tmp, resp.Body); err != nil {
+		tmp.Close()
+		return fmt.Errorf("download: %w", err)
+	}
+	tmp.Close()
+
+	cmd := exec.CommandContext(ctx, "afplay", tmp.Name())
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	return cmd.Run()
 }
 
 // Say speaks text via the macOS `say` command.
