@@ -17,6 +17,8 @@ A command-line companion app for the [Connected](https://relay.fm/connected) pod
 
 It was inspired by Stephen saying "`connected --exit`" on [episode 605](https://relay.fm/connected/605), after hearing about [remctl](https://www.macstories.net/stories/introducing-remctl-the-power-user-reminders-cli-for-macos-and-ai-agents/). Like `remctl`, `conctl` produces human-readable terminal output by default, but can also produce JSON for agents to consume.  
 
+![conctl screenshot](docs/conctl.png)
+
 ## How It Works
 `conctl` is a single, self-contained Go binary that stitches together the public data the show already publishes:
 
