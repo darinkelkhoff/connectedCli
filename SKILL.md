@@ -95,8 +95,14 @@ conctl notes 605 --json
 ```bash
 conctl rickies --json          # current standings
 conctl rickies titles --json   # per-host titles
-conctl rickies games --json    # array of game names
+conctl rickies games --json    # [{ "name": "2026 March Rickies", "path": "/game/39.json" }, …]
+conctl rickies game "2026 March" --json   # one game in full detail
 ```
+`rickies game <name>` matches the name fuzzily (unique substring is enough) and
+returns the full game: `{ name, game-type, date-picked, date-graded, main-game, the-flexies }`.
+Each round (`main-game`, `the-flexies`) has `picks[]` (each with `host`, `text`,
+`score`, `pick-conditions` — a pick hit if `score > 0`), `scores[]`
+(main: `{host, score}`; flexies: `{host, correct, total}`), and a `winner`.
 `rickies --json` (keys are lowercase):
 ```json
 { "titles": { "Stephen": ["Annual Chairman", "Attorney General Flexie"], "Myke": [], "Federico": ["…"] },
