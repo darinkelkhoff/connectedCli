@@ -15,7 +15,7 @@ goes to stdout, and is what you should parse. Notes/spinners/errors go to stderr
 ## Check availability
 
 ```bash
-command -v conctl || echo "not installed: brew install dkelkhoff/tap/conctl"
+command -v conctl || echo "not installed: brew install darinkelkhoff/tap/conctl"
 conctl --version
 ```
 
@@ -104,7 +104,9 @@ conctl rickies game "2026 March" --json   # one game in full detail
 conctl rickies bill --json                # the current Bill of Rickies (rules)
 conctl rickies bill --versions --json     # every past edition
 conctl rickies bill --version annual-2017 --json   # a past edition's rules
+conctl rickies bill diff annual-2017 annual-2018 --json  # {from,to,added[],removed[]}
 ```
+`bill diff <from> [to]` compares two editions (to defaults to the current bill).
 `rickies bill --json` returns the current rules in order as
 `[{ "heading": bool, "text": "…" }]` (headings mark sections like "The Rickies"
 and "The Flexies"). `--versions` lists editions as
