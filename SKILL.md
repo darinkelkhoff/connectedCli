@@ -102,10 +102,14 @@ conctl rickies titles --json   # per-host titles
 conctl rickies games --json    # [{ "name": "2026 March Rickies", "path": "/game/39.json" }, …]
 conctl rickies game "2026 March" --json   # one game in full detail
 conctl rickies bill --json                # the current Bill of Rickies (rules)
+conctl rickies bill --versions --json     # every past edition
+conctl rickies bill --version annual-2017 --json   # a past edition's rules
 ```
 `rickies bill --json` returns the current rules in order as
 `[{ "heading": bool, "text": "…" }]` (headings mark sections like "The Rickies"
-and "The Flexies"). Bare `conctl rickies` (no `--json`) leads with a one-line
+and "The Flexies"). `--versions` lists editions as
+`[{ "index", "slug", "name", "date", "datetime" }]`; `--version <slug|index>`
+renders that past edition's rules. Bare `conctl rickies` (no `--json`) leads with a one-line
 bill banner above the standings; `conctl rickies --json` still returns just the
 standings (winners).
 `rickies game <name>` matches the name fuzzily (unique substring is enough) and

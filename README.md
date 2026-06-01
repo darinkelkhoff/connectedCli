@@ -128,6 +128,8 @@ conctl reads the [rickies.net](https://rickies.net/) API:
 ```bash
 conctl rickies                 # a Bill-of-Rickies banner + current chairmen & titles
 conctl rickies bill            # the full current Bill of Rickies (the rules)
+conctl rickies bill --versions # list every past edition of the bill (since 2017)
+conctl rickies bill --version annual-2017   # print a past edition
 conctl rickies titles Stephen  # one host's titles
 conctl rickies games           # every Rickies game, 2017 -> today
 conctl rickies game "2026 March"   # one game in detail
@@ -135,7 +137,9 @@ conctl rickies game "2026 March"   # one game in detail
 
 `rickies bill` reconstructs the **current** rules from the date-versioned
 [Bill of Rickies](https://rickies.co/billof) — keeping only the rules (and inline
-edits) in force today.
+edits) in force today. `--versions` lists all 35 past editions (the page's
+history slider), and `--version <slug|index>` prints any of them as they stood
+at that date.
 
 `rickies game <name>` shows the main round and the flexies for a game — the
 winner, each host's score, and every pick grouped by host with a ✓/✗ for whether
