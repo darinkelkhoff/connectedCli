@@ -226,6 +226,67 @@ func init() {
 	bill.Flags().BoolVar(&listVersions, "versions", false, "list the bill's edition history instead of printing it")
 	bill.Flags().StringVar(&version, "version", "", "print a past edition by slug or index (see --versions)")
 
+	billDiff := &cobra.Command{
+		Use:   "diff <from> [to]",
+		Short: "Diff two editions of the bill (default 'to' is the current bill)",
+		Args:  cobra.RangeArgs(1, 2),
+		RunE: func(c *cobra.Command, args []string) error {
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cancel()
+			htmlStr, err := rickies.FetchBillHTML(ctx)
+			if err != nil {
+				return err
+			}
+			versions := rickies.ParseBillVersions(htmlStr)
+
+			fromV, ok := rickies.MatchBillVersion(versions, args[0])
+			if !ok {
+				return fmt.Errorf("no bill version %q (see `conctl rickies bill --versions`)", args[0])
+			}
+			fromEntries := rickies.ParseBill(htmlStr, fromV.Unix())
+
+			toName, toNow := "current", time.Now().Unix()
+			if len(args) == 2 {
+				toV, ok := rickies.MatchBillVersion(versions, args[1])
+				if !ok {
+					return fmt.Errorf("no bill version %q (see `conctl rickies bill --versions`)", args[1])
+				}
+				toName, toNow = toV.Name, toV.Unix()
+			}
+			toEntries := rickies.ParseBill(htmlStr, toNow)
+
+			added, removed := rickies.DiffBills(fromEntries, toEntries)
+			if jsonOutput {
+				return render.JSON(c.OutOrStdout(), map[string]any{
+					"from": fromV.Name, "to": toName, "added": added, "removed": removed,
+				})
+			}
+			out := c.OutOrStdout()
+			color := colorEnabled(out)
+			fmt.Fprintf(out, "Bill of Rickies: %s  →  %s\n", fromV.Name, toName)
+			fmt.Fprintf(out, "%d removed, %d added.\n\n", len(removed), len(added))
+			for _, e := range removed {
+				line := "  - " + e.Text
+				if color {
+					line = "\033[91m" + line + ansiReset
+				}
+				fmt.Fprintln(out, line)
+			}
+			for _, e := range added {
+				line := "  + " + e.Text
+				if color {
+					line = "\033[92m" + line + ansiReset
+				}
+				fmt.Fprintln(out, line)
+			}
+			if len(added) == 0 && len(removed) == 0 {
+				fmt.Fprintln(out, "  (no rule changes)")
+			}
+			return nil
+		},
+	}
+	bill.AddCommand(billDiff)
+
 	root.AddCommand(titles, games, game, bill)
 	registerCommands = append(registerCommands, root)
 }

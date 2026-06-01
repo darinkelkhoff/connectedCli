@@ -140,6 +140,23 @@ func TestParseBillVersions(t *testing.T) {
 	}
 }
 
+func TestDiffBills(t *testing.T) {
+	from := []BillEntry{{Heading: true, Text: "Sec"}, {Text: "a"}, {Text: "b"}, {Text: "c"}}
+	to := []BillEntry{{Heading: true, Text: "Sec"}, {Text: "b"}, {Text: "c"}, {Text: "d"}}
+	added, removed := DiffBills(from, to)
+	if len(added) != 1 || added[0].Text != "d" {
+		t.Errorf("added wrong: %+v", added)
+	}
+	if len(removed) != 1 || removed[0].Text != "a" {
+		t.Errorf("removed wrong: %+v", removed)
+	}
+	// Identical bills → no changes; headings ignored.
+	a2, r2 := DiffBills(from, from)
+	if len(a2) != 0 || len(r2) != 0 {
+		t.Errorf("identical bills should have no diff: +%v -%v", a2, r2)
+	}
+}
+
 func TestParseEpisodes(t *testing.T) {
 	data, err := os.ReadFile("testdata/episodes.json")
 	if err != nil {

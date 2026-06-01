@@ -253,6 +253,34 @@ func ParseBill(htmlStr string, now int64) []BillEntry {
 	return out
 }
 
+// DiffBills compares two bill editions (rules only), returning the rules added
+// in `to` and removed from `from`, each in their source order.
+func DiffBills(from, to []BillEntry) (added, removed []BillEntry) {
+	inFrom := map[string]bool{}
+	for _, e := range from {
+		if !e.Heading {
+			inFrom[e.Text] = true
+		}
+	}
+	inTo := map[string]bool{}
+	for _, e := range to {
+		if !e.Heading {
+			inTo[e.Text] = true
+		}
+	}
+	for _, e := range to {
+		if !e.Heading && !inFrom[e.Text] {
+			added = append(added, e)
+		}
+	}
+	for _, e := range from {
+		if !e.Heading && !inTo[e.Text] {
+			removed = append(removed, e)
+		}
+	}
+	return added, removed
+}
+
 // FirstParagraph returns the first rule (non-heading) entry's text, for a banner.
 func FirstParagraph(entries []BillEntry) string {
 	for _, e := range entries {
