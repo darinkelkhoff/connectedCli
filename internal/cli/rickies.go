@@ -23,18 +23,51 @@ func formatTitles(titles []string) string {
 	return strings.Join(titles, "; ")
 }
 
+// lookupHost finds a host's titles case-insensitively, returning the canonical
+// host name (e.g. "Federico" for "federico").
+func lookupHost(titles map[string][]string, query string) (string, []string) {
+	for h, ts := range titles {
+		if strings.EqualFold(h, query) {
+			return h, ts
+		}
+	}
+	return query, nil
+}
+
+// rickiesRundown lists the rickies subcommands, shown under the bare-command banner.
+const rickiesRundown = `Rounds:
+  Titles           conctl rickies titles [host]  current chairmen & titles
+  Bill             conctl rickies bill           the full current rules
+  Games            conctl rickies games          every Rickies game
+  Game             conctl rickies game <name>    one game's picks & scores`
+
+// printStandings prints the current chairmen and per-host titles.
+func printStandings(out io.Writer, w rickies.Winners) {
+	fmt.Fprintf(out, "Annual Chairman:  %s (%s, %s)\n", w.Annual.Winner, w.Annual.GameName, w.Annual.Date)
+	fmt.Fprintf(out, "Keynote Chairman: %s (%s, %s)\n", w.Keynote.Winner, w.Keynote.GameName, w.Keynote.Date)
+	fmt.Fprintln(out, "\nTitles:")
+	hosts := make([]string, 0, len(w.Titles))
+	for h := range w.Titles {
+		hosts = append(hosts, h)
+	}
+	sort.Strings(hosts)
+	for _, h := range hosts {
+		fmt.Fprintf(out, "  %s: %s\n", h, formatTitles(w.Titles[h]))
+	}
+}
+
 func init() {
 	root := &cobra.Command{
 		Use:   "rickies",
-		Short: "The Rickies: a banner, current chairmen, titles, and the bill",
+		Short: "The Rickies: standings, titles, games, and the bill",
 		RunE: func(c *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
-			w, err := rickies.FetchWinners(ctx)
-			if err != nil {
-				return err
-			}
 			if jsonOutput {
+				w, err := rickies.FetchWinners(ctx)
+				if err != nil {
+					return err
+				}
 				return render.JSON(c.OutOrStdout(), w)
 			}
 			out := c.OutOrStdout()
@@ -44,25 +77,15 @@ func init() {
 					fmt.Fprintf(out, "%s\n\n", para)
 				}
 			}
-			fmt.Fprintf(out, "Annual Chairman:  %s (%s, %s)\n", w.Annual.Winner, w.Annual.GameName, w.Annual.Date)
-			fmt.Fprintf(out, "Keynote Chairman: %s (%s, %s)\n", w.Keynote.Winner, w.Keynote.GameName, w.Keynote.Date)
-			fmt.Fprintln(out, "\nTitles:")
-			hosts := make([]string, 0, len(w.Titles))
-			for h := range w.Titles {
-				hosts = append(hosts, h)
-			}
-			sort.Strings(hosts)
-			for _, h := range hosts {
-				fmt.Fprintf(out, "  %s: %s\n", h, formatTitles(w.Titles[h]))
-			}
-			fmt.Fprintln(out, "\nFull Bill of Rickies: conctl rickies bill")
+			fmt.Fprintln(out, rickiesRundown)
 			return nil
 		},
 	}
 
 	titles := &cobra.Command{
 		Use:   "titles [host]",
-		Short: "List titles per host",
+		Short: "Current chairmen and titles (or one host's titles)",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
@@ -70,21 +93,20 @@ func init() {
 			if err != nil {
 				return err
 			}
-			data := w.Titles
+			// One host: just that host's titles (case-insensitive).
 			if len(args) == 1 {
-				data = map[string][]string{args[0]: w.Titles[args[0]]}
+				host, ts := lookupHost(w.Titles, args[0])
+				if jsonOutput {
+					return render.JSON(c.OutOrStdout(), map[string][]string{host: ts})
+				}
+				fmt.Fprintf(c.OutOrStdout(), "%s: %s\n", host, formatTitles(ts))
+				return nil
 			}
+			// No host: the full standings (chairmen + every host's titles).
 			if jsonOutput {
-				return render.JSON(c.OutOrStdout(), data)
+				return render.JSON(c.OutOrStdout(), w)
 			}
-			hosts := make([]string, 0, len(data))
-			for h := range data {
-				hosts = append(hosts, h)
-			}
-			sort.Strings(hosts)
-			for _, h := range hosts {
-				fmt.Fprintf(c.OutOrStdout(), "%s: %s\n", h, formatTitles(data[h]))
-			}
+			printStandings(c.OutOrStdout(), w)
 			return nil
 		},
 	}
