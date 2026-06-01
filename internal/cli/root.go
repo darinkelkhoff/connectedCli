@@ -7,8 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Version is overridden at build time via -ldflags.
-var Version = "dev"
+// Versions are episode-styled: a zero-padded number plus a title in the show's
+// spirit. Version (the number) may be overridden at build time via -ldflags.
+var (
+	Version  = "001"
+	Codename = "connected --exit"
+)
 
 // jsonOutput is the global --json flag, read by subcommands.
 var jsonOutput bool
@@ -30,7 +34,7 @@ func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "conctl",
 		Short:         "A command-line companion for the Connected podcast",
-		Version:       Version,
+		Version:       fmt.Sprintf("%s '%s'", Version, Codename),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
