@@ -126,7 +126,8 @@ func Say(ctx context.Context, text string) error {
 	}
 	cmd := exec.CommandContext(ctx, "say")
 	cmd.Stdin = strings.NewReader(text)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = io.Discard
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("say: %w", err)
 	}
