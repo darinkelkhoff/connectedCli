@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const BaseURL = "https://rickies.net/api/v1"
@@ -262,20 +263,123 @@ func FirstParagraph(entries []BillEntry) string {
 	return ""
 }
 
-// FetchBill downloads and parses the current Bill of Rickies.
-func FetchBill(ctx context.Context, now int64) ([]BillEntry, error) {
+// FetchBillHTML downloads the raw Bill of Rickies page.
+func FetchBillHTML(ctx context.Context) (string, error) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, BillURL, nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("bill: %w", err)
+		return "", fmt.Errorf("bill: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bill: status %d", resp.StatusCode)
+		return "", fmt.Errorf("bill: status %d", resp.StatusCode)
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// FetchBill downloads and parses the Bill of Rickies in force at `now`.
+func FetchBill(ctx context.Context, now int64) ([]BillEntry, error) {
+	htmlStr, err := FetchBillHTML(ctx)
+	if err != nil {
 		return nil, err
 	}
-	return ParseBill(string(data), now), nil
+	return ParseBill(htmlStr, now), nil
+}
+
+// BillVersion is one historical edition of the bill, as listed by the site's
+// history slider.
+type BillVersion struct {
+	Index    int    `json:"index"`
+	Slug     string `json:"slug"`
+	Name     string `json:"name"`
+	Date     string `json:"date"`     // display form, e.g. "January 4, 2017"
+	Datetime string `json:"datetime"` // ISO form, e.g. "2017-01-04"
+}
+
+// Unix returns a timestamp at noon on the version's date, suitable for ParseBill.
+func (v BillVersion) Unix() int64 {
+	t, err := time.Parse("2006-01-02", v.Datetime)
+	if err != nil {
+		return 0
+	}
+	return t.Add(12 * time.Hour).Unix()
+}
+
+var (
+	billNamesArrRe = regexp.MustCompile(`(?s)rickies_event_names\s*=\s*\[(.*?)\]`)
+	billDatesArrRe = regexp.MustCompile(`(?s)rickies_event_dates\s*=\s*\[(.*?)\]`)
+	billUrlsArrRe  = regexp.MustCompile(`(?s)rickies_event_urls\s*=\s*\[(.*?)\]`)
+	jsStringRe     = regexp.MustCompile(`'((?:\\.|[^'])*)'`)
+	billDatetimeRe = regexp.MustCompile(`datetime="([^"]+)"`)
+	billTimeTextRe = regexp.MustCompile(`(?s)<time[^>]*>(.*?)</time>`)
+)
+
+func jsStringArray(htmlStr string, re *regexp.Regexp) []string {
+	m := re.FindStringSubmatch(htmlStr)
+	if m == nil {
+		return nil
+	}
+	var out []string
+	for _, s := range jsStringRe.FindAllStringSubmatch(m[1], -1) {
+		out = append(out, s[1])
+	}
+	return out
+}
+
+// ParseBillVersions extracts the bill's version history from the page's slider data.
+func ParseBillVersions(htmlStr string) []BillVersion {
+	names := jsStringArray(htmlStr, billNamesArrRe)
+	dates := jsStringArray(htmlStr, billDatesArrRe)
+	urls := jsStringArray(htmlStr, billUrlsArrRe)
+	n := len(urls)
+	if len(names) < n {
+		n = len(names)
+	}
+	if len(dates) < n {
+		n = len(dates)
+	}
+	versions := make([]BillVersion, 0, n)
+	for i := 0; i < n; i++ {
+		v := BillVersion{Index: i, Slug: urls[i], Name: cleanBillText(names[i])}
+		if dm := billDatetimeRe.FindStringSubmatch(dates[i]); dm != nil {
+			v.Datetime = dm[1]
+		}
+		if tm := billTimeTextRe.FindStringSubmatch(dates[i]); tm != nil {
+			v.Date = cleanBillText(tm[1])
+		}
+		versions = append(versions, v)
+	}
+	return versions
+}
+
+// MatchBillVersion resolves a query (slug, index, or unique substring) to a version.
+func MatchBillVersion(versions []BillVersion, query string) (BillVersion, bool) {
+	if n, err := strconv.Atoi(query); err == nil {
+		for _, v := range versions {
+			if v.Index == n {
+				return v, true
+			}
+		}
+		return BillVersion{}, false
+	}
+	for _, v := range versions {
+		if strings.EqualFold(v.Slug, query) {
+			return v, true
+		}
+	}
+	q := strings.ToLower(query)
+	var hits []BillVersion
+	for _, v := range versions {
+		if strings.Contains(strings.ToLower(v.Slug), q) || strings.Contains(strings.ToLower(v.Name), q) {
+			hits = append(hits, v)
+		}
+	}
+	if len(hits) == 1 {
+		return hits[0], true
+	}
+	return BillVersion{}, false
 }

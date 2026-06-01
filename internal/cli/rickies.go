@@ -172,26 +172,59 @@ func init() {
 		},
 	}
 
+	var listVersions bool
+	var version string
 	bill := &cobra.Command{
 		Use:   "bill",
-		Short: "Print the full Bill of Rickies (the current rules)",
+		Short: "Print the Bill of Rickies (current rules, or a past version)",
 		RunE: func(c *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
-			entries, err := rickies.FetchBill(ctx, time.Now().Unix())
+			htmlStr, err := rickies.FetchBillHTML(ctx)
 			if err != nil {
 				return err
 			}
+			out := c.OutOrStdout()
+
+			// --versions: list the bill's edition history.
+			if listVersions {
+				versions := rickies.ParseBillVersions(htmlStr)
+				if len(versions) == 0 {
+					return errors.New("could not read the bill version history")
+				}
+				if jsonOutput {
+					return render.JSON(out, versions)
+				}
+				for _, v := range versions {
+					fmt.Fprintf(out, "  %2d  %-16s  %-18s  %s\n", v.Index, v.Slug, v.Date, v.Name)
+				}
+				return nil
+			}
+
+			// --version: render a specific past edition (default: current).
+			now := time.Now().Unix()
+			if version != "" {
+				v, ok := rickies.MatchBillVersion(rickies.ParseBillVersions(htmlStr), version)
+				if !ok {
+					return fmt.Errorf("no bill version %q (see `conctl rickies bill --versions`)", version)
+				}
+				now = v.Unix()
+				fmt.Fprintf(c.ErrOrStderr(), "Bill of Rickies — %s (%s)\n\n", v.Name, v.Date)
+			}
+
+			entries := rickies.ParseBill(htmlStr, now)
 			if len(entries) == 0 {
 				return errors.New("could not read the Bill of Rickies")
 			}
 			if jsonOutput {
-				return render.JSON(c.OutOrStdout(), entries)
+				return render.JSON(out, entries)
 			}
-			printBill(c.OutOrStdout(), entries, colorEnabled(c.OutOrStdout()))
+			printBill(out, entries, colorEnabled(out))
 			return nil
 		},
 	}
+	bill.Flags().BoolVar(&listVersions, "versions", false, "list the bill's edition history instead of printing it")
+	bill.Flags().StringVar(&version, "version", "", "print a past edition by slug or index (see --versions)")
 
 	root.AddCommand(titles, games, game, bill)
 	registerCommands = append(registerCommands, root)

@@ -105,6 +105,41 @@ func TestParseBill(t *testing.T) {
 	}
 }
 
+func TestParseBillVersions(t *testing.T) {
+	data, err := os.ReadFile("testdata/bill_sample.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	versions := ParseBillVersions(string(data))
+	if len(versions) != 2 {
+		t.Fatalf("expected 2 versions, got %d: %+v", len(versions), versions)
+	}
+	v0 := versions[0]
+	if v0.Slug != "annual-2017" || v0.Datetime != "2017-01-04" || v0.Name != "Annual Predictions 2017" {
+		t.Errorf("version 0 parsed wrong: %+v", v0)
+	}
+	if v0.Date != "January 4, 2017" {
+		t.Errorf("display date wrong: %q", v0.Date)
+	}
+	if v0.Unix() <= 0 {
+		t.Errorf("Unix() should be positive: %d", v0.Unix())
+	}
+
+	// Match by slug, index, and unique substring.
+	if v, ok := MatchBillVersion(versions, "keynote-mar-2019"); !ok || v.Index != 1 {
+		t.Errorf("slug match failed: %+v ok=%v", v, ok)
+	}
+	if v, ok := MatchBillVersion(versions, "1"); !ok || v.Slug != "keynote-mar-2019" {
+		t.Errorf("index match failed: %+v ok=%v", v, ok)
+	}
+	if v, ok := MatchBillVersion(versions, "march"); !ok || v.Index != 1 {
+		t.Errorf("substring match failed: %+v ok=%v", v, ok)
+	}
+	if _, ok := MatchBillVersion(versions, "nope"); ok {
+		t.Error("expected no match for 'nope'")
+	}
+}
+
 func TestParseEpisodes(t *testing.T) {
 	data, err := os.ReadFile("testdata/episodes.json")
 	if err != nil {
