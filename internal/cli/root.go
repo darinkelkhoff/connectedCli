@@ -15,7 +15,7 @@ var versionsFile string
 // Versions are episode-styled: a zero-padded number plus a title in the show's
 // spirit. Version (the number) may be overridden at build time via -ldflags.
 var (
-	Version  = "002"
+	Version  = "003"
 	Codename = codenameFor(Version)
 )
 
