@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"html"
+	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -11,6 +12,18 @@ import (
 	"github.com/dkelkhoff/connectedCli/internal/render"
 	"github.com/spf13/cobra"
 )
+
+// printNoteLinks writes "• text / url" lines, hyperlinking the text via OSC 8
+// when color (a terminal) is enabled.
+func printNoteLinks(out io.Writer, links []NoteLink, color bool) {
+	for _, l := range links {
+		text := l.Text
+		if color {
+			text = osc8(l.URL, l.Text)
+		}
+		fmt.Fprintf(out, "  • %s\n    %s\n", text, l.URL)
+	}
+}
 
 // NoteLink is one link from an episode's show notes.
 type NoteLink struct {
@@ -73,13 +86,7 @@ func init() {
 				return nil
 			}
 			fmt.Fprintln(out, "\nShow notes:")
-			for _, l := range links {
-				text := l.Text
-				if color {
-					text = osc8(l.URL, l.Text)
-				}
-				fmt.Fprintf(out, "  • %s\n    %s\n", text, l.URL)
-			}
+			printNoteLinks(out, links, color)
 			return nil
 		},
 	}

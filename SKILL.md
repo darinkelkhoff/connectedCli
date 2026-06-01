@@ -53,6 +53,8 @@ conctl latest --json
 { "number": 605, "title": "Being Completely Awesome", "date": "…",
   "mp3Url": "…", "link": "https://relay.fm/connected/605", "summary": "…" }
 ```
+Add `--full` to also include the episode's chapters and show-note links:
+`conctl latest --full --json` adds `chapters[]` and `links[]`.
 
 ### Chapters
 

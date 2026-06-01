@@ -33,6 +33,9 @@ func TestParseExtractsEpisodes(t *testing.T) {
 	if e.MP3URL == "" {
 		t.Errorf("mp3 url not parsed: %+v", e)
 	}
+	if e.Date.IsZero() {
+		t.Errorf("date not parsed (RSS uses GMT-style pubDate): %+v", e)
+	}
 }
 
 func TestLatestIsHighestNumbered(t *testing.T) {

@@ -39,6 +39,17 @@ type rss struct {
 	} `xml:"channel"`
 }
 
+// parseDate parses an RSS pubDate, accepting both numeric (-0700) and named
+// (GMT) time zones.
+func parseDate(s string) time.Time {
+	for _, layout := range []string{time.RFC1123Z, time.RFC1123} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t
+		}
+	}
+	return time.Time{}
+}
+
 // Parse turns raw RSS bytes into episodes.
 func Parse(data []byte) ([]Episode, error) {
 	var doc rss
@@ -47,7 +58,7 @@ func Parse(data []byte) ([]Episode, error) {
 	}
 	out := make([]Episode, 0, len(doc.Channel.Items))
 	for _, it := range doc.Channel.Items {
-		date, _ := time.Parse(time.RFC1123Z, it.PubDate)
+		date := parseDate(it.PubDate)
 		out = append(out, Episode{
 			Number:    it.Episode,
 			Title:     it.Title,

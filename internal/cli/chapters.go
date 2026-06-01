@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/dkelkhoff/connectedCli/internal/chapters"
@@ -33,6 +34,13 @@ func msToClock(ms uint32) string {
 	return fmt.Sprintf("%02d:%02d:%02d", s/3600, (s%3600)/60, s%60)
 }
 
+// printChapterList writes the indented "NN. HH:MM:SS  Title" lines for chapters.
+func printChapterList(out io.Writer, chs []chapters.Chapter) {
+	for _, ch := range chs {
+		fmt.Fprintf(out, "  %2d. %s  %s\n", ch.Index, msToClock(ch.StartMs), ch.Title)
+	}
+}
+
 func init() {
 	cmd := &cobra.Command{
 		Use:   "chapters [episode]",
@@ -60,9 +68,7 @@ func init() {
 				return render.JSON(c.OutOrStdout(), chs)
 			}
 			fmt.Fprintf(c.OutOrStdout(), "Connected #%d — %s\n", ep.Number, ep.Title)
-			for _, ch := range chs {
-				fmt.Fprintf(c.OutOrStdout(), "  %2d. %s  %s\n", ch.Index, msToClock(ch.StartMs), ch.Title)
-			}
+			printChapterList(c.OutOrStdout(), chs)
 			return nil
 		},
 	}

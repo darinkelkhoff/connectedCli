@@ -63,6 +63,7 @@ Common examples:
 
 ```bash
 conctl latest                          # most recent episode
+conctl latest --full                   # episode + chapters + show notes in one view
 conctl chapters                        # chapters of the latest episode
 conctl chapters 605                    # chapters of a specific episode
 conctl notes                           # show notes & links for the latest episode
