@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// intro/exit flag state, bound on the root command.
+// introExitFlags holds the hidden root-flag form (the `connected --exit` joke).
 type introExitFlags struct {
 	intro, exit       bool
 	play, say, useLLM bool
@@ -24,22 +24,37 @@ type introExitFlags struct {
 
 var ie introExitFlags
 
-func bindIntroExit(root *cobra.Command) {
-	// These are LOCAL flags on the root command — they apply only to the bare
-	// `conctl --intro` / `conctl --exit` invocation, not to subcommands, so they
-	// don't pollute every subcommand's help. Only --json is truly global.
-	f := root.Flags()
-	f.BoolVar(&ie.intro, "intro", false, "play the show's intro (the first chapter of an episode)")
-	f.BoolVar(&ie.exit, "exit", false, "play the show's closing (the last chapter of an episode)")
-	f.BoolVar(&ie.play, "play", false, "[--intro/--exit] play the chapter audio (requires ffmpeg)")
-	f.BoolVar(&ie.say, "say", false, "[--intro/--exit] read the chapter aloud via macOS say")
-	f.BoolVar(&ie.useLLM, "llm", false, "[--intro/--exit] generate from the chapter via a local AI CLI")
-	f.BoolVar(&ie.short, "short", false, "[--intro/--exit] just the quick sign-offs")
-	f.StringVar(&ie.prompt, "prompt", "", "[--intro/--exit] LLM prompt preset (e.g. conclusion, cold-open, haiku)")
-	f.IntVar(&ie.episode, "episode", 0, "[--intro/--exit] target episode number (default: latest)")
+// introExitOpts is a resolved intro/exit request, shared by the `intro`/`exit`
+// subcommands and the hidden --intro/--exit root flags.
+type introExitOpts struct {
+	isExit   bool
+	epNum    int  // 0 = latest
+	explicit bool // the episode was chosen explicitly (positional or --episode)
+	short    bool
+	mode     renderMode
+}
 
-	// Allow a positional episode number (e.g. `conctl --intro 601`) only when
-	// --intro/--exit is set; otherwise keep cobra's "unknown command" behavior.
+func bindIntroExit(root *cobra.Command) {
+	// The canonical interface: real subcommands with their own help + flags.
+	root.AddCommand(newIntroExitCmd(false), newIntroExitCmd(true))
+
+	// Hidden root-flag aliases so `conctl --exit` / `conctl --intro` still work
+	// (the joke the project is named for). Hidden so they don't clutter help.
+	f := root.Flags()
+	f.BoolVar(&ie.intro, "intro", false, "")
+	f.BoolVar(&ie.exit, "exit", false, "")
+	f.BoolVar(&ie.play, "play", false, "")
+	f.BoolVar(&ie.say, "say", false, "")
+	f.BoolVar(&ie.useLLM, "llm", false, "")
+	f.BoolVar(&ie.short, "short", false, "")
+	f.StringVar(&ie.prompt, "prompt", "", "")
+	f.IntVar(&ie.episode, "episode", 0, "")
+	for _, n := range []string{"intro", "exit", "play", "say", "llm", "short", "prompt", "episode"} {
+		_ = f.MarkHidden(n)
+	}
+
+	// Allow a positional episode (e.g. `conctl --intro 601`) only with the
+	// --intro/--exit flag form; otherwise keep cobra's "unknown command" error.
 	root.Args = func(cmd *cobra.Command, args []string) error {
 		if ie.intro || ie.exit {
 			return nil
@@ -50,31 +65,68 @@ func bindIntroExit(root *cobra.Command) {
 		return nil
 	}
 
-	// When --intro/--exit are present and no subcommand is given, run here.
-	// With no flags at all, show the banner (NOT the full help).
 	root.RunE = func(c *cobra.Command, args []string) error {
 		if !ie.intro && !ie.exit {
 			printBanner(c.OutOrStdout())
 			return nil
 		}
-		return runIntroExit(c, args)
+		if ie.intro && ie.exit {
+			return errors.New("use either --intro or --exit, not both")
+		}
+		epNum, explicit := ie.episode, ie.episode > 0
+		if !explicit && len(args) > 0 {
+			if n, err := strconv.Atoi(args[0]); err == nil {
+				epNum, explicit = n, true
+			}
+		}
+		return runIntroExit(c, introExitOpts{
+			isExit:   ie.exit,
+			epNum:    epNum,
+			explicit: explicit,
+			short:    ie.short,
+			mode:     renderMode{play: ie.play, say: ie.say, useLLM: ie.useLLM, prompt: ie.prompt},
+		})
 	}
 }
 
-// introExitWord names the targeted chapter for messages.
-func introExitWord() string {
-	if ie.exit {
-		return "closing"
-	}
-	return "intro"
-}
+// newIntroExitCmd builds the `intro` or `exit` subcommand.
+func newIntroExitCmd(isExit bool) *cobra.Command {
+	var play, say, useLLM, short bool
+	var prompt string
 
-// introExitChapter selects the first chapter for --intro, the last for --exit.
-func introExitChapter(chs []chapters.Chapter) chapters.Chapter {
-	if ie.exit {
-		return chapters.Last(chs)
+	use, shortDesc := "intro [episode]", "Play the show's intro (an episode's first chapter)"
+	if isExit {
+		use, shortDesc = "exit [episode]", "Play the show's closing (an episode's last chapter)"
 	}
-	return chapters.First(chs)
+	cmd := &cobra.Command{
+		Use:   use,
+		Short: shortDesc,
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(c *cobra.Command, args []string) error {
+			epNum, explicit := 0, false
+			if len(args) > 0 {
+				n, err := strconv.Atoi(args[0])
+				if err != nil {
+					return fmt.Errorf("episode must be a number, got %q", args[0])
+				}
+				epNum, explicit = n, true
+			}
+			return runIntroExit(c, introExitOpts{
+				isExit:   isExit,
+				epNum:    epNum,
+				explicit: explicit,
+				short:    short,
+				mode:     renderMode{play: play, say: say, useLLM: useLLM, prompt: prompt},
+			})
+		},
+	}
+	f := cmd.Flags()
+	f.BoolVar(&play, "play", false, "play the chapter audio (requires ffmpeg)")
+	f.BoolVar(&say, "say", false, "read the chapter aloud via macOS say")
+	f.BoolVar(&useLLM, "llm", false, "generate from the chapter via a local AI CLI")
+	f.BoolVar(&short, "short", false, "just the quick sign-off(s)")
+	f.StringVar(&prompt, "prompt", "", "LLM prompt preset (conclusion, cold-open, recap, style-myke/-stephen/-federico, haiku)")
+	return cmd
 }
 
 func runShortExit(w io.Writer) error {
@@ -87,53 +139,57 @@ func runShortIntro(w io.Writer) error {
 	return err
 }
 
-func runIntroExit(c *cobra.Command, args []string) error {
-	if ie.short {
-		if ie.exit {
+// runIntroExit validates and executes a resolved intro/exit request.
+func runIntroExit(c *cobra.Command, o introExitOpts) error {
+	// At most one output mode may be selected.
+	modes := 0
+	for _, b := range []bool{o.short, o.mode.play, o.mode.say, o.mode.useLLM} {
+		if b {
+			modes++
+		}
+	}
+	if modes > 1 {
+		return errors.New("choose at most one of --short, --play, --say, --llm")
+	}
+
+	if o.short {
+		if o.isExit {
 			return runShortExit(c.OutOrStdout())
 		}
 		return runShortIntro(c.OutOrStdout())
 	}
 
-	// Episode may come from --episode or a positional number; both are "explicit".
-	epNum, explicit := ie.episode, ie.episode > 0
-	if !explicit && len(args) > 0 {
-		if n, err := strconv.Atoi(args[0]); err == nil {
-			epNum, explicit = n, true
+	if o.mode.useLLM && o.mode.prompt == "" {
+		o.mode.prompt = "cold-open"
+		if o.isExit {
+			o.mode.prompt = "conclusion"
 		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
 	defer cancel()
 
-	prompt := ie.prompt
-	if ie.useLLM && prompt == "" {
-		if ie.exit {
-			prompt = "conclusion"
-		} else {
-			prompt = "cold-open"
-		}
-	}
-	mode := renderMode{play: ie.play, say: ie.say, useLLM: ie.useLLM, prompt: prompt}
+	err := emitIntroExitChapter(ctx, c, o.isExit, o.epNum, o.mode)
 
-	err := emitIntroExit(ctx, c, epNum, mode)
-
-	// Fallback: if the (defaulted, not explicitly chosen) latest episode has no
-	// transcript yet for a text mode, show the same chapter from the newest
-	// transcribed episode instead — with a note. --play needs no transcript.
+	// Fallback: a defaulted (not explicit) latest episode with no transcript yet
+	// for a text mode → use the newest transcribed episode, noting it on stderr.
 	var nt *podsearch.NoTranscriptError
-	if err != nil && !ie.play && !explicit && errors.As(err, &nt) {
+	if err != nil && !o.mode.play && !o.explicit && errors.As(err, &nt) {
+		word := "intro"
+		if o.isExit {
+			word = "closing"
+		}
 		fmt.Fprintf(c.ErrOrStderr(),
 			"note: episode %d isn't transcribed yet — showing the %s from %d instead.\n\n",
-			nt.Episode, introExitWord(), nt.Newest)
-		return emitIntroExit(ctx, c, nt.Newest, mode)
+			nt.Episode, word, nt.Newest)
+		return emitIntroExitChapter(ctx, c, o.isExit, nt.Newest, o.mode)
 	}
 	return err
 }
 
-// emitIntroExit resolves an episode (0 = latest), fetches its chapters, and
-// emits the intro (first) or closing (last) chapter in the given mode.
-func emitIntroExit(ctx context.Context, c *cobra.Command, epNum int, mode renderMode) error {
+// emitIntroExitChapter resolves an episode (0 = latest), fetches its chapters,
+// and emits the first (intro) or last (closing) chapter in the given mode.
+func emitIntroExitChapter(ctx context.Context, c *cobra.Command, isExit bool, epNum int, mode renderMode) error {
 	ep, err := resolveEpisode(ctx, epNum)
 	if err != nil {
 		return err
@@ -145,5 +201,9 @@ func emitIntroExit(ctx context.Context, c *cobra.Command, epNum int, mode render
 	if len(chs) == 0 {
 		return errors.New("no chapters found")
 	}
-	return emitChapter(ctx, c, ep, introExitChapter(chs), mode)
+	ch := chapters.First(chs)
+	if isExit {
+		ch = chapters.Last(chs)
+	}
+	return emitChapter(ctx, c, ep, ch, mode)
 }

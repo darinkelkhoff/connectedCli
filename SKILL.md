@@ -21,12 +21,12 @@ conctl --version
 
 ## Episode targeting
 
-Most commands take an optional episode. With none, they use the **latest**
-episode. Specify one with a positional number or `--episode N`:
+Most commands take an optional episode as a positional number. With none, they
+use the **latest** episode:
 
 ```bash
 conctl chapters 605
-conctl --intro --episode 601
+conctl intro 601
 ```
 
 ## Commands and JSON shapes
@@ -65,20 +65,22 @@ conctl chapters 605 --json
 
 ### Intro / closing chapter
 
-`--intro` = first chapter, `--exit` = last chapter. Default output is the
+`conctl intro [ep]` = first chapter, `conctl exit [ep]` = last chapter. (The
+`--intro`/`--exit` flag form on the bare `conctl` command also works — that's the
+show's running joke — but prefer the subcommands.) Default output is the
 chapter's transcript text; add `--json`:
 
 ```bash
-conctl --intro --episode 601 --json
-conctl --exit  --episode 601 --json
+conctl intro 601 --json
+conctl exit 601 --json
 ```
 ```json
 { "episode": 601, "chapter": { "index": 0, "title": "…", "startMs": 0, "endMs": 73556 }, "text": "…" }
 ```
-Modes: `--play` (audio, needs ffmpeg), `--say` (macOS TTS), `--llm` (rewrite via
-a local AI CLI), `--short` (just the sign-offs). `--prompt` selects an `--llm`
-preset: `conclusion`, `cold-open`, `recap`, `style-federico`, `style-myke`,
-`style-stephen`, `haiku`.
+Modes (choose at most one): `--play` (audio, needs ffmpeg), `--say` (macOS TTS),
+`--llm` (rewrite via a local AI CLI), `--short` (just the sign-offs). `--prompt`
+selects an `--llm` preset: `conclusion`, `cold-open`, `recap`, `style-federico`,
+`style-myke`, `style-stephen`, `haiku`.
 
 ### Show notes
 
@@ -134,7 +136,7 @@ Each round (`main-game`, `the-flexies`) has `picks[]` (each with `host`, `text`,
 conctl search "vision pro" --limit 1 --json | jq '.[0] | {episodeNumber, time, url}'
 
 # Summarize how the latest *transcribed* episode ended.
-conctl --exit --llm --prompt conclusion
+conctl exit --llm --prompt conclusion
 
 # Who is the current Annual Chairman?
 conctl rickies --json | jq -r '.annual.winner'

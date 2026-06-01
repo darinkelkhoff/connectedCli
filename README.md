@@ -71,11 +71,12 @@ conctl rickies                         # current Annual & Keynote Chairmen + tit
 conctl rickies titles Federico         # one host's titles
 conctl rickies games                   # every Rickies game ever
 conctl play 605 --chapter 7            # play a chapter's audio (needs ffmpeg)
-conctl --intro                         # the cold open of the latest episode
-conctl --exit --episode 601            # the closing chapter of a specific episode
-conctl --exit --short                  # Arrivederci. Cheerio. Bye, y'all.
-conctl --exit --say                    # ...read aloud by macOS
-conctl --exit --llm --prompt haiku     # ...as a haiku, from your local AI
+conctl intro                           # the cold open of the latest episode
+conctl exit 601                        # the closing chapter of a specific episode
+conctl exit --short                    # Arrivederci. Cheerio. Bye, y'all.
+conctl exit --say                      # ...read aloud by macOS
+conctl exit --llm --prompt haiku       # ...as a haiku, from your local AI
+conctl --exit                          # the joke: works as a flag too
 conctl rickies --json                  # structured output for agents
 ```
 
@@ -86,12 +87,12 @@ conctl treats the **first** chapter as the intro and the **last** as the exit:
 
 ```bash
 conctl chapters 605      # list them
-conctl --intro           # first chapter of the latest episode
-conctl --exit            # last chapter of the latest episode
+conctl intro             # first chapter of the latest episode
+conctl exit              # last chapter of the latest episode
 conctl play --last       # play the last chapter (ffmpeg)
 ```
 
-`--intro` and `--exit` share a set of render modes:
+The `intro` and `exit` subcommands share a set of render modes (choose at most one):
 
 | flag        | what you get                                                        |
 | ----------- | ------------------------------------------------------------------- |
@@ -99,9 +100,13 @@ conctl play --last       # play the last chapter (ffmpeg)
 | `--play`    | streams just that chapter's audio (requires `ffmpeg`)               |
 | `--say`     | macOS `say` reads the chapter aloud                                 |
 | `--llm`     | a local AI CLI (`claude` / `codex`) generates text from the chapter |
+| `--short`   | just the quick sign-offs                                            |
 | `--json`    | structured output - ideal for consumption by an LLM                 |
-| `--short`   | (intro/exit) just the quick sign-offs                               |
-Target any specific episode with `--episode N` or a positional number (`conctl --intro 601`); the default is the latest episode (*latest transcribed episode, when requesting text instead of audio*).
+
+Target any specific episode with a positional number (`conctl intro 601`); the
+default is the latest episode (*latest transcribed episode, when requesting text
+instead of audio*). For the joke, `conctl --intro` and `conctl --exit` also work
+as flags on the bare command.
 
 ## Search
 
@@ -151,9 +156,9 @@ keys, no new services. It probes `claude` (`claude -p`), then `codex`
 (`codex exec`), and uses the first one it finds.
 
 ```bash
-conctl --exit --episode 601 --llm                    # a closing summary in the show's voice
-conctl --exit --episode 601 --llm --prompt haiku     # the episode as a haiku
-conctl --intro --episode 601 --llm --say             # an AI cold-open, read aloud
+conctl exit 601 --llm                    # a closing summary in the show's voice
+conctl exit 601 --llm --prompt haiku     # the episode as a haiku
+conctl intro 601 --llm --say             # an AI cold-open, read aloud
 ```
 
 Prompt presets (`--prompt`): `conclusion` (default for `--exit`), `cold-open`
@@ -170,7 +175,7 @@ conctl search "siri" --json | jq '.[0]'
 conctl chapters 605 --json
 conctl rickies --json
 conctl notes --json
-conctl --exit --episode 601 --json    # { episode, chapter, text }
+conctl exit 601 --json                # { episode, chapter, text }
 ```
 
 Because conctl reads only public data and never writes anything, it's safe to
