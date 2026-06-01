@@ -21,11 +21,9 @@ It was inspired by Stephen saying "`connected --exit`" on [episode 605](https://
 `conctl` is a single, self-contained Go binary that stitches together the public data the show already publishes:
 
 - episodes, chapters, and show notes come from the Connected RSS feed.
-- transcript are from podcastsearch.david-smith.org (thank you David Smith)
-- the Rickies data comes from rickies.net/api/v1 (thanks to jbiatek)
+- transcripts are from podcastsearch.david-smith.org (thank you David Smith)
+- the Rickies data comes from rickies.net/api/v1 (thanks to Jason Biatek) and https://rickies.co (thanks Lex Postma)
 - local AI (via the `--llm` flag calls your your already-installed claude / codex CLI
-  
-Nothing is hosted by conctl, and there are no API keys. Chapters are read by fetching only the first ~512 KB of an episode's MP3 (the ID3 tag), so listing chapters is fast. Audio playback streams just the chosen chapter via `ffmpeg`.
 
 ## Quick Start
 
@@ -36,14 +34,15 @@ brew install darinkelkhoff/tap/conctl
 conctl                       # print the show banner with a rundown of commands
 conctl search "vision pro"   # search transcripts, deep-linked to the second
 conctl rickies               # print current title holders
-conctl --exit                # the sign-off (the final chapter of the latest episode)
+conctl --exit                # text of the sign-off (the final chapter of the latest *transcribed* episode)
+conctl --exit --play         # play the audio of the sign-off
 ```
 
-The Homebrew cask declares an optional `ffmpeg` dependency (only needed for `--play`).
+Full-episode playback uses `afplay` (built into macOS) when available, then `ffplay`/`ffmpeg`. Chapter/segment playback (intro, exit, `--chapter`) needs `ffplay` or `ffmpeg` (`brew install ffmpeg`). The Homebrew formula declares `ffmpeg` as an optional dependency.
 ### From source
 
 ```bash
-git clone https://github.com/darin.kelkhoff/connectedCli.git
+git clone https://github.com/darinkelkhoff/connectedCli.git
 cd connectedCli
 just build            # -> ./bin/conctl   (or: go build -o bin/conctl ./cmd/conctl)
 ./bin/conctl --help
@@ -59,38 +58,39 @@ just build            # -> ./bin/conctl   (or: go build -o bin/conctl ./cmd/conc
 | Listen / read a chapter | `play [ep]`, `--intro`, `--exit`                    |
 | Agent mode              | `--json` on any command                             |
 
-Common examples:
+### Common examples
 
 ```bash
-conctl latest                          # most recent episode
-conctl latest --full                   # episode + chapters + show notes in one view
+conctl latest                          # title and link to the most recent episode
+conctl latest --full                   # episode + chapters + show notes from most recent
 conctl chapters                        # chapters of the latest episode
 conctl chapters 605                    # chapters of a specific episode
 conctl notes                           # show notes & links for the latest episode
-conctl search "macintosh" --limit 5    # transcript hits, grouped by episode
-conctl rickies                         # current Annual & Keynote Chairmen + titles
+conctl notes 605                       # show notes & links for specific episode
+conctl search "liquid glass" --limit 5 # transcript hits, grouped by episode
+conctl rickies titles                  # current list of all titles and chairpersonships
 conctl rickies titles Federico         # one host's titles
-conctl rickies games                   # every Rickies game ever
-conctl play 605 --chapter 7            # play a chapter's audio (needs ffmpeg)
+conctl rickies games                   # list every Rickies game ever
+conctl rickies game "2025 WWDC Rickies"# rundown of a specific Rickies game
+conctl play 605 --chapter 7            # play a chapter's audio (needs ffplay or ffmpeg)
 conctl intro                           # the cold open of the latest episode
 conctl exit 601                        # the closing chapter of a specific episode
 conctl exit --short                    # Arrivederci. Cheerio. Bye, y'all.
 conctl exit --say                      # ...read aloud by macOS
 conctl exit --llm --prompt haiku       # ...as a haiku, from your local AI
 conctl --exit                          # the joke: works as a flag too
-conctl rickies --json                  # structured output for agents
+conctl rickies --json                  # structured output for agents - for any command!
 ```
 
 ## Chapters, Intros & Exits
 
-Every episode's chapters come from the MP3's embedded ID3 chapter markers.
-conctl treats the **first** chapter as the intro and the **last** as the exit:
+Every episode's chapters come from the MP3's embedded ID3 chapter markers. `conctl` treats the **first** chapter as the intro and the last one as the exit.  Note that commands which output text do require transcripts to be posted.  Commands with `--play` work from the podcast mp3's, so do not require transcripts.
 
 ```bash
-conctl chapters 605      # list them
+conctl chapters 605      # list chpaters
 conctl intro             # first chapter of the latest episode
 conctl exit              # last chapter of the latest episode
-conctl play --last       # play the last chapter (ffmpeg)
+conctl play --last       # play the last chapter (needs ffplay or ffmpeg)
 ```
 
 The `intro` and `exit` subcommands share a set of render modes (choose at most one):
@@ -98,16 +98,13 @@ The `intro` and `exit` subcommands share a set of render modes (choose at most o
 | flag        | what you get                                                        |
 | ----------- | ------------------------------------------------------------------- |
 | *(default)* | the chapter's transcript text — no dependencies                     |
-| `--play`    | streams just that chapter's audio (requires `ffmpeg`)               |
+| `--play`    | streams just that chapter's audio (needs `ffplay` or `ffmpeg`)      |
 | `--say`     | macOS `say` reads the chapter aloud                                 |
 | `--llm`     | a local AI CLI (`claude` / `codex`) generates text from the chapter |
-| `--short`   | just the quick sign-offs                                            |
+| `--short`   | just the quick sign-offs or first sentence of the intro.            |
 | `--json`    | structured output - ideal for consumption by an LLM                 |
 
-Target any specific episode with a positional number (`conctl intro 601`); the
-default is the latest episode (*latest transcribed episode, when requesting text
-instead of audio*). For the joke, `conctl --intro` and `conctl --exit` also work
-as flags on the bare command.
+You can target any specific episode with a positional number (`conctl intro 601`); the default is the latest episode (*latest transcribed episode, when requesting text instead of audio*). While the actual commands here are `intro` and `exit`, you can say `conctl --exit` - or, for bonus points, can create an alias in your shell `alias connected=conctl`, to use the literal `connected --exit` as foretold by Stephen.  
 
 ## Search
 
@@ -123,37 +120,29 @@ Add `--json` for `{episodeNumber, episodeTitle, time, seconds, snippet, url}` ob
 
 ## The Rickies
 
-conctl reads the [rickies.net](https://rickies.net/) API:
+`conctl` reads the [rickies.net](https://rickies.net/) API and reads the Bill of Rickes from rickes.co:
 
 ```bash
-conctl rickies                 # a Bill-of-Rickies banner + current chairmen & titles
+conctl rickies                 # a Rickies banner plus list of subcommands
 conctl rickies bill            # the full current Bill of Rickies (the rules)
-conctl rickies bill --versions # list every past edition of the bill (since 2017)
+conctl rickies bill --versions # list every past edition of the bill
 conctl rickies bill --version annual-2017   # print a past edition
 conctl rickies bill diff annual-2017 annual-2018   # diff two editions
 conctl rickies bill --say      # read the bill aloud (macOS say)
+conctl rickies titles          # print all current titles
 conctl rickies titles Stephen  # one host's titles
 conctl rickies games           # every Rickies game, 2017 -> today
 conctl rickies game "2026 March"   # one game in detail
 ```
 
-`rickies bill` reconstructs the **current** rules from the date-versioned
-[Bill of Rickies](https://rickies.co/billof) — keeping only the rules (and inline
-edits) in force today. `--versions` lists all 35 past editions (the page's
-history slider), and `--version <slug|index>` prints any of them as they stood
-at that date.
+`rickies bill` reconstructs the **current** rules from the date-versioned [Bill of Rickies](https://rickies.co/billof) — keeping only the rules (and inline edits) in force today. `--versions` lists all 35 past editions (the page's history slider), and `--version <slug|index>` prints any of them as they stood at that date.
 
-`rickies game <name>` shows the main round and the flexies for a game — the
-winner, each host's score, and every pick grouped by host with a ✓/✗ for whether
-it hit, plus the flexies' charity. The name is matched fuzzily (a unique
-substring is enough).
+`rickies game <name>` shows the main round and the flexies for a game — the winner, each host's score, and every pick grouped by host with a ✓/✗ for whether it hit, plus the flexies' charity. The name is matched fuzzily (a unique substring is enough).
 
-A host with no current titles is, of course, a **Man of the People**.
-
+A host with no current titles is, of course, declared to be the **Man of the People** (looking at you, Myke).
 ## Show Notes
 
-Each episode's notes — summary, sponsors, and links — live in the RSS feed, so
-this works for every episode (no transcript needed):
+Each episode's show notes are available in the RSS feed, so this works for every episode (no transcript needed):
 
 ```bash
 conctl notes        # latest episode
@@ -163,9 +152,7 @@ conctl notes --json # { episode, title, summary, links: [{text, url}] }
 
 ## Local AI (`--llm`)
 
-`--llm` rewrites a chapter using an AI CLI **you already have installed** — no API
-keys, no new services. It probes `claude` (`claude -p`), then `codex`
-(`codex exec`), and uses the first one it finds.
+`--llm` rewrites a chapter using an AI CLI **that you already have installed**. You don't set up any API keys or install anything new. It checks for `claude` (`claude -p`), then `codex` (`codex exec`), and uses the first one it finds.
 
 ```bash
 conctl exit 601 --llm                    # a closing summary in the show's voice
@@ -173,14 +160,11 @@ conctl exit 601 --llm --prompt haiku     # the episode as a haiku
 conctl intro 601 --llm --say             # an AI cold-open, read aloud
 ```
 
-Prompt presets (`--prompt`): `conclusion` (default for `--exit`), `cold-open`
-(default for `--intro`), `recap`, `style-federico`, `style-myke`,
-`style-stephen`, `haiku`. A spinner shows while your local model thinks.
+Prompt presets (`--prompt`): `conclusion` (default for `--exit`), `cold-open` (default for `--intro`), `recap`, `style-federico`, `style-myke`, `style-stephen`, `haiku`. A spinner shows while your local model thinks.
 
 ## For Agents
 
-Every command accepts `--json` and writes machine-readable output to stdout;
-notes, spinners, and progress go to stderr, so piping stdout stays clean.
+Every command accepts `--json` and writes machine-readable output to stdout; notes, spinners, and progress go to stderr, so piping stdout stays clean.
 
 ```bash
 conctl search "siri" --json | jq '.[0]'
@@ -190,100 +174,25 @@ conctl notes --json
 conctl exit 601 --json                # { episode, chapter, text }
 ```
 
-Because conctl reads only public data and never writes anything, it's safe to
-hand to an agent.
+Because `conctl` reads only public data and never writes anything, it's safe to hand to an agent.  I mean, as safe as anything vibe-coded could be. 
 
-A ready-to-use agent guide — with the full `--json` schemas, caveats, and `jq`
-recipes — lives in [`SKILL.md`](SKILL.md).
+A ready-to-use agent guide — with the full `--json` schemas, caveats, and `jq` recipes — lives in [`SKILL.md`](SKILL.md).
 
 ## Notes & Caveats
-
-- **Transcripts lag the feed.** David Smith re-transcribes episodes on a delay,
-  so the newest episode or two may not be searchable yet. For `--intro`/`--exit`
-  text/`--say`/`--llm`, conctl automatically falls back to the newest transcribed
-  episode (with a note on stderr). `--play` always works — chapters and audio
+- **Transcripts lag the feed.** David Smith re-transcribes episodes on a delay, so the newest episode or two may not be searchable yet. For `--intro`/`--exit` text/`--say`/`--llm`, conctl automatically falls back to the newest transcribed episode (with a note on stderr). `--play` always works — chapters and audio
   come straight from the MP3.
-- **`--play` needs `ffmpeg`** (`brew install ffmpeg`); the Homebrew formula
-  declares it as an optional dependency. All other modes are dependency-free
-  (`say` is built into macOS).
-- **`--llm` needs a local agent CLI** (`claude` or `codex`); otherwise it prints
-  a friendly "no local AI found" message.
+- **`--play`** uses `afplay` (built into macOS) for full-episode playback, with no extra dependencies. Chapter and segment playback (`intro --play`, `exit --play`, `play --chapter N`) needs `ffplay` or `ffmpeg` — `brew install ffmpeg` gets you both. The Homebrew formula declares `ffmpeg` as an optional dependency. All other modes are dependency-free (`say` is built into macOS).
+- **`--llm` needs a local agent CLI** (`claude` or `codex`); otherwise it prints a friendly "no local AI found" message.
 
 ## Development
-
-```bash
-just            # list recipes
-just build      # build ./bin/conctl
-just run ...    # go run with args (e.g. just run search "macintosh")
-just test       # go test ./...
-```
-
-## Project Layout
-
-| Path | Purpose |
-| --- | --- |
-| `cmd/conctl` | Entry point |
-| `internal/cli` | Cobra command tree, banner, render modes, spinner |
-| `internal/feed` | Connected RSS feed parsing (episodes, show notes) |
-| `internal/chapters` | ID3v2 chapter parsing + ranged MP3 fetch |
-| `internal/podsearch` | Transcript search + episode transcript slicing |
-| `internal/rickies` | rickies.net API client |
-| `internal/audio` | `ffplay` segment playback + macOS `say` |
-| `internal/llm` | Local AI provider detection + prompt presets |
-| `internal/render` | Pretty vs. JSON output |
-
-## Releasing
-
-Releases are cut locally with [GoReleaser](https://goreleaser.com). Each macOS
-binary is signed with a Developer ID certificate and notarized by Apple, so it
-passes Gatekeeper without any quarantine workarounds.
-
-### One-time setup
-
-1. **Developer ID Application certificate** in the login keychain (verify with
-   `security find-identity -v -p codesigning`).
-2. **Notary credentials** stored under the profile name the signing script
-   expects (`conctl-notary`):
-   ```bash
-   xcrun notarytool store-credentials conctl-notary \
-     --apple-id "you@example.com" --team-id 9MG4YT2G93
-   ```
-   (Uses an app-specific password from appleid.apple.com.)
-3. **GitHub token** with `repo` scope, exported as `GITHUB_TOKEN`. This is used
-   both to create the GitHub Release and to push the cask to the separate
-   `darinkelkhoff/homebrew-tap` repo, so the default Actions token is not
-   sufficient — use a classic PAT.
-
-### Cutting a release
-
-```bash
-git tag v0.1.0 && git push --tags
-export GITHUB_TOKEN=...           # classic PAT, repo scope
-goreleaser release --clean
-```
-
-GoReleaser builds the darwin amd64/arm64 binaries, runs
-`scripts/sign-and-notarize.sh` on each (sign → notarize → wait; a few minutes
-total), publishes the archives to a GitHub Release, and updates the cask in
-`darinkelkhoff/homebrew-tap`. Users then `brew install darinkelkhoff/tap/conctl`.
-
-To rehearse without publishing, use
-`CONCTL_SKIP_SIGN=1 goreleaser release --snapshot --clean`. `--snapshot` skips
-the GitHub push but still runs build hooks, so `CONCTL_SKIP_SIGN=1` is what
-actually bypasses the (slow, network-bound) signing/notarization step.
-
-If notarization fails, inspect the reason with:
-```bash
-xcrun notarytool log <submission-id> --keychain-profile conctl-notary
-```
+Building from source, project layout, and the release process live in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Credits
-
-conctl stands on the shoulders of fan-built and host-built work:
-
-- [Connected](https://relay.fm/connected) by Myke Hurley, Federico Viticci, and Stephen Hackett (Relay FM)
+`conctl` couldn't exist with the following members of the community:
+- [Connected](https://relay.fm/connected) by Myke Hurley, Federico Viticci, and Stephen Hackett (Relay (probably not) FM)
 - [Podcast Search](https://podcastsearch.david-smith.org/) by David Smith
 - [rickies.net](https://rickies.net/) by jbiatek
+- [rickies.co](https://rickies.co/) by Lex Postma
 - Inspired by [remctl](https://github.com/viticci/remctl) by Federico Viticci
 
 ## License

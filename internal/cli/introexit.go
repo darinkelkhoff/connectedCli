@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/darinkelkhoff/connectedCli/internal/audio"
 	"github.com/darinkelkhoff/connectedCli/internal/chapters"
 	"github.com/darinkelkhoff/connectedCli/internal/podsearch"
 	"github.com/spf13/cobra"
@@ -124,39 +125,72 @@ func newIntroExitCmd(isExit bool) *cobra.Command {
 	f.BoolVar(&play, "play", false, "play the chapter audio (requires ffmpeg)")
 	f.BoolVar(&say, "say", false, "read the chapter aloud via macOS say")
 	f.BoolVar(&useLLM, "llm", false, "generate from the chapter via a local AI CLI")
-	f.BoolVar(&short, "short", false, "just the quick sign-off(s)")
+	f.BoolVar(&short, "short", false, "just the first sentence (intro) or sign-off (exit)")
 	f.StringVar(&prompt, "prompt", "", "LLM prompt preset (conclusion, cold-open, recap, style-myke/-stephen/-federico, haiku)")
 	return cmd
 }
 
-func runShortExit(w io.Writer) error {
-	_, err := fmt.Fprintln(w, "Arrivederci. Cheerio. Bye, y'all.")
-	return err
+func firstSentence(text string) string {
+	if i := strings.IndexAny(text, ".!?"); i >= 0 {
+		return strings.TrimSpace(text[:i+1])
+	}
+	return strings.TrimSpace(text)
 }
 
-func runShortIntro(w io.Writer) error {
-	_, err := fmt.Fprintln(w, "This is Connected.")
-	return err
+func shortIntroText(ctx context.Context, epNum int) (string, error) {
+	ep, err := resolveEpisode(ctx, epNum)
+	if err != nil {
+		return "", err
+	}
+	chs, err := chapters.Fetch(ctx, ep.MP3URL)
+	if err != nil {
+		return "", err
+	}
+	if len(chs) == 0 {
+		return "", errors.New("no chapters found")
+	}
+	text, err := chapterText(ctx, ep, chapters.First(chs))
+	if err != nil {
+		return "", err
+	}
+	return firstSentence(text), nil
 }
 
 // runIntroExit validates and executes a resolved intro/exit request.
 func runIntroExit(c *cobra.Command, o introExitOpts) error {
-	// At most one output mode may be selected.
+	// --short is a content modifier and may combine with --say, but not --play/--llm.
+	if o.short && (o.mode.play || o.mode.useLLM) {
+		return errors.New("--short cannot be combined with --play or --llm")
+	}
 	modes := 0
-	for _, b := range []bool{o.short, o.mode.play, o.mode.say, o.mode.useLLM} {
+	for _, b := range []bool{o.mode.play, o.mode.say, o.mode.useLLM} {
 		if b {
 			modes++
 		}
 	}
 	if modes > 1 {
-		return errors.New("choose at most one of --short, --play, --say, --llm")
+		return errors.New("choose at most one of --play, --say, --llm")
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
+	defer cancel()
+
 	if o.short {
+		var text string
 		if o.isExit {
-			return runShortExit(c.OutOrStdout())
+			text = "Arrivederci. Cheerio. Bye, y'all."
+		} else {
+			var err error
+			text, err = shortIntroText(ctx, o.epNum)
+			if err != nil {
+				return err
+			}
 		}
-		return runShortIntro(c.OutOrStdout())
+		if o.mode.say {
+			return audio.Say(ctx, text)
+		}
+		_, err := fmt.Fprintln(c.OutOrStdout(), text)
+		return err
 	}
 
 	if o.mode.useLLM && o.mode.prompt == "" {
@@ -165,9 +199,6 @@ func runIntroExit(c *cobra.Command, o introExitOpts) error {
 			o.mode.prompt = "conclusion"
 		}
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
-	defer cancel()
 
 	err := emitIntroExitChapter(ctx, c, o.isExit, o.epNum, o.mode)
 

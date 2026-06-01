@@ -103,7 +103,7 @@ type Pick struct {
 	Text       string `json:"text"`
 	Notes      string `json:"notes,omitempty"`
 	Type       string `json:"type,omitempty"`
-	Score      int    `json:"score"`
+	Score      float64 `json:"score"`
 	Conditions int    `json:"pick-conditions"`
 }
 
@@ -114,7 +114,7 @@ func (p Pick) Hit() bool { return p.Score > 0 }
 // use Correct/Total.
 type HostScore struct {
 	Host    string `json:"host"`
-	Score   int    `json:"score,omitempty"`
+	Score   float64 `json:"score,omitempty"`
 	Correct int    `json:"correct,omitempty"`
 	Total   int    `json:"total,omitempty"`
 }

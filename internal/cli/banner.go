@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"unicode/utf8"
 )
 
 // wordmark is the "conctl" block-letter logo (ANSI Shadow style), one entry per
@@ -72,8 +73,18 @@ func printBanner(w io.Writer) {
 		fmt.Fprintln(w, colorize(line, wordmarkGradient[i%len(wordmarkGradient)]))
 	}
 
+	width := utf8.RuneCountInString(wordmark[0])
+	center := func(s string) string {
+		pad := (width - utf8.RuneCountInString(s)) / 2
+		if pad < 0 {
+			pad = 0
+		}
+		return strings.Repeat(" ", pad) + s
+	}
+
 	tagline := "The Connected CLI"
-	fmt.Fprintf(w, "\n%s%s\n\n", strings.Repeat(" ", 21), colorize(tagline, ansiBold))
+	ver := fmt.Sprintf("#%s - %s", Version, Codename)
+	fmt.Fprintf(w, "\n%s\n%s\n\n", colorize(center(tagline), ansiBold), center(ver))
 	fmt.Fprintln(w, rundown)
 	fmt.Fprintf(w, "\n%s\n\n", colorize("Run `conctl --help` for all commands and flags.", ansiDim))
 }

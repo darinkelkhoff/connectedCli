@@ -380,7 +380,7 @@ func scoreLine(scores []rickies.HostScore) string {
 		if s.Total > 0 {
 			parts = append(parts, fmt.Sprintf("%s %d/%d", s.Host, s.Correct, s.Total))
 		} else {
-			parts = append(parts, fmt.Sprintf("%s %d", s.Host, s.Score))
+			parts = append(parts, fmt.Sprintf("%s %g", s.Host, s.Score))
 		}
 	}
 	return strings.Join(parts, " · ")
