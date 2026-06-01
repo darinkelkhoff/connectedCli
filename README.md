@@ -1,7 +1,7 @@
 # conctl: The Connected CLI
 
-A fast, scriptable command-line companion for the [Connected](https://relay.fm/connected)
-podcast — built for both power-user fans and AI agents.
+A command-line companion app for the [Connected](https://relay.fm/connected)
+podcast.  Built for fans, AI agents, hosts, and mostly just because Stephen mentioned it as a joke once.
 
 ```text
  ██████╗   ██████╗   ███╗   ██╗   ██████╗  ████████╗  ██╗
@@ -14,7 +14,7 @@ podcast — built for both power-user fans and AI agents.
                      The Connected CLI
 ```
 
-conctl searches the show's transcripts, reads its chapters, pulls show notes,
+conctl searches the show's unotranscripts, reads its chapters, pulls show notes,
 tracks the Rickies, and — because it's Connected — lets you run `conctl --exit`.
 
 It was inspired by Stephen Hackett riffing "connected cli… connected `--exit`" on
@@ -190,6 +190,9 @@ conctl --exit --episode 601 --json    # { episode, chapter, text }
 
 Because conctl reads only public data and never writes anything, it's safe to
 hand to an agent.
+
+A ready-to-use agent guide — with the full `--json` schemas, caveats, and `jq`
+recipes — lives in [`SKILL.md`](SKILL.md).
 
 ## Notes & Caveats
 
