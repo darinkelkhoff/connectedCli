@@ -18,6 +18,12 @@ test:
 kill:
     -rm -rf bin dist
 
+# edit the files to do a release
+pre-release:
+   vi internal/cli/versions.txt
+   vi internal/cli/root.go
+   git commit internal/cli/versions.txt internal/cli/root.go
+
 # Cut a release (builds, signs, notarizes, publishes, updates the cask)
 release:
     ./scripts/release.sh
