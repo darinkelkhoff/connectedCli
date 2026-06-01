@@ -25,15 +25,18 @@ type introExitFlags struct {
 var ie introExitFlags
 
 func bindIntroExit(root *cobra.Command) {
-	f := root.PersistentFlags()
-	f.BoolVar(&ie.intro, "intro", false, "render the first chapter (the cold open)")
-	f.BoolVar(&ie.exit, "exit", false, "render the final chapter (the sign-off)")
-	f.BoolVar(&ie.play, "play", false, "play the chapter audio (requires ffmpeg)")
-	f.BoolVar(&ie.say, "say", false, "read the chapter aloud via macOS say")
-	f.BoolVar(&ie.useLLM, "llm", false, "generate from the chapter via a local AI CLI")
-	f.BoolVar(&ie.short, "short", false, "just the quick sign-offs")
-	f.StringVar(&ie.prompt, "prompt", "", "LLM prompt preset (e.g. conclusion, cold-open, haiku)")
-	f.IntVar(&ie.episode, "episode", 0, "target episode number (default: latest)")
+	// These are LOCAL flags on the root command — they apply only to the bare
+	// `conctl --intro` / `conctl --exit` invocation, not to subcommands, so they
+	// don't pollute every subcommand's help. Only --json is truly global.
+	f := root.Flags()
+	f.BoolVar(&ie.intro, "intro", false, "play the show's intro (the first chapter of an episode)")
+	f.BoolVar(&ie.exit, "exit", false, "play the show's closing (the last chapter of an episode)")
+	f.BoolVar(&ie.play, "play", false, "[--intro/--exit] play the chapter audio (requires ffmpeg)")
+	f.BoolVar(&ie.say, "say", false, "[--intro/--exit] read the chapter aloud via macOS say")
+	f.BoolVar(&ie.useLLM, "llm", false, "[--intro/--exit] generate from the chapter via a local AI CLI")
+	f.BoolVar(&ie.short, "short", false, "[--intro/--exit] just the quick sign-offs")
+	f.StringVar(&ie.prompt, "prompt", "", "[--intro/--exit] LLM prompt preset (e.g. conclusion, cold-open, haiku)")
+	f.IntVar(&ie.episode, "episode", 0, "[--intro/--exit] target episode number (default: latest)")
 
 	// Allow a positional episode number (e.g. `conctl --intro 601`) only when
 	// --intro/--exit is set; otherwise keep cobra's "unknown command" behavior.
