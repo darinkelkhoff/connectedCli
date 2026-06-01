@@ -50,36 +50,48 @@ just build            # -> ./bin/conctl   (or: go build -o bin/conctl ./cmd/conc
 
 ## Command Map
 
-| Task                    | Commands                                            |
-| ----------------------- | --------------------------------------------------- |
-| See the show            | `latest`, `chapters [ep]`, `notes [ep]`             |
-| Search transcripts      | `search <query>`                                    |
-| The Rickies             | `rickies`, `rickies titles [host]`, `rickies games` |
-| Listen / read a chapter | `play [ep]`, `--intro`, `--exit`                    |
-| Agent mode              | `--json` on any command                             |
+| Area             | Commands                                                                          |
+| ---------------- | --------------------------------------------------------------------------------- |
+| Episode info     | `latest`, `latest --full`, `chapters [ep]`, `notes [ep]`                         |
+| Search           | `search <query>`                                                                  |
+| Play audio       | `play [ep]`, `play --first`, `play --last`, `play --chapter N`                   |
+| Intro / cold open| `intro [ep]`, `intro --short`, `intro --say`, `intro --play`, `intro --llm`      |
+| Exit / sign-off  | `exit [ep]`, `exit --short`, `exit --say`, `exit --play`, `exit --llm`           |
+| Rickies          | `rickies titles [host]`, `rickies games`, `rickies game <name>`, `rickies bill`  |
+| Agent / JSON     | add `--json` to any command                                                       |
 
 ### Common examples
 
 ```bash
-conctl latest                          # title and link to the most recent episode
-conctl latest --full                   # episode + chapters + show notes from most recent
-conctl chapters                        # chapters of the latest episode
-conctl chapters 605                    # chapters of a specific episode
-conctl notes                           # show notes & links for the latest episode
-conctl notes 605                       # show notes & links for specific episode
-conctl search "liquid glass" --limit 5 # transcript hits, grouped by episode
-conctl rickies titles                  # current list of all titles and chairpersonships
-conctl rickies titles Federico         # one host's titles
-conctl rickies games                   # list every Rickies game ever
-conctl rickies game "2025 WWDC Rickies"# rundown of a specific Rickies game
-conctl play 605 --chapter 7            # play a chapter's audio (needs ffplay or ffmpeg)
-conctl intro                           # the cold open of the latest episode
-conctl exit 601                        # the closing chapter of a specific episode
-conctl exit --short                    # Arrivederci. Cheerio. Bye, y'all.
-conctl exit --say                      # ...read aloud by macOS
-conctl exit --llm --prompt haiku       # ...as a haiku, from your local AI
-conctl --exit                          # the joke: works as a flag too
-conctl rickies --json                  # structured output for agents - for any command!
+conctl latest                           # title and link to the most recent episode
+conctl latest --full                    # episode + chapters + show notes
+conctl chapters 605                     # list an episode's chapters
+conctl notes 605                        # show notes & links for an episode
+conctl search "liquid glass" --limit 5  # transcript hits, grouped by episode
+
+conctl intro                            # cold open of the latest episode (transcript)
+conctl intro --short                    # just the first sentence
+conctl intro --short --say              # ...spoken aloud
+conctl intro --play                     # stream the intro audio (needs ffplay/ffmpeg)
+conctl intro --llm --prompt cold-open   # AI-generated cold open from your local CLI
+
+conctl exit                             # sign-off of the latest episode (transcript)
+conctl exit --short                     # Arrivederci. Cheerio. Bye, y'all.
+conctl exit --short --say               # ...spoken aloud
+conctl exit 601 --llm --prompt haiku    # the episode as a haiku
+
+conctl play 605                         # stream the full episode audio
+conctl play --last                      # stream the last chapter (needs ffplay/ffmpeg)
+conctl play 605 --chapter 7             # stream one chapter by index
+
+conctl rickies titles                   # current chairmen and all titles
+conctl rickies titles Federico          # one host's titles
+conctl rickies games                    # every Rickies game ever played
+conctl rickies game "2025 WWDC Rickies" # one game's picks and scores
+conctl rickies bill                     # the current Bill of Rickies
+
+conctl --exit                           # the joke: works as a root flag too
+conctl search "siri" --json             # structured output for agents (any command)
 ```
 
 ## Chapters, Intros & Exits
