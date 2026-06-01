@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dkelkhoff/connectedCli/internal/audio"
-	"github.com/dkelkhoff/connectedCli/internal/chapters"
-	"github.com/dkelkhoff/connectedCli/internal/feed"
-	"github.com/dkelkhoff/connectedCli/internal/llm"
-	"github.com/dkelkhoff/connectedCli/internal/podsearch"
-	"github.com/dkelkhoff/connectedCli/internal/render"
+	"github.com/darinkelkhoff/connectedCli/internal/audio"
+	"github.com/darinkelkhoff/connectedCli/internal/chapters"
+	"github.com/darinkelkhoff/connectedCli/internal/feed"
+	"github.com/darinkelkhoff/connectedCli/internal/llm"
+	"github.com/darinkelkhoff/connectedCli/internal/podsearch"
+	"github.com/darinkelkhoff/connectedCli/internal/render"
 	"github.com/spf13/cobra"
 )
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dkelkhoff/connectedCli/internal/podsearch"
+	"github.com/darinkelkhoff/connectedCli/internal/podsearch"
 )
 
 func TestMakeHighlighter(t *testing.T) {

@@ -3,7 +3,7 @@ package cli
 import (
 	"testing"
 
-	"github.com/dkelkhoff/connectedCli/internal/rickies"
+	"github.com/darinkelkhoff/connectedCli/internal/rickies"
 )
 
 func TestMatchGame(t *testing.T) {

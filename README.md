@@ -31,7 +31,7 @@ Nothing is hosted by conctl, and there are no API keys. Chapters are read by fet
 
 ### Via Homebrew
 ```bash
-brew install darin.kelkhoff/tap/conctl
+brew install darinkelkhoff/tap/conctl
 
 conctl                       # print the show banner with a rundown of commands
 conctl search "vision pro"   # search transcripts, deep-linked to the second
@@ -39,7 +39,7 @@ conctl rickies               # print current title holders
 conctl --exit                # the sign-off (the final chapter of the latest episode)
 ```
 
-The homebrew formula declares an optional `ffmpeg` dependency (only needed for `--play`).
+The Homebrew cask declares an optional `ffmpeg` dependency (only needed for `--play`).
 ### From source
 
 ```bash
@@ -234,14 +234,48 @@ just test       # go test ./...
 
 ## Releasing
 
+Releases are cut locally with [GoReleaser](https://goreleaser.com). Each macOS
+binary is signed with a Developer ID certificate and notarized by Apple, so it
+passes Gatekeeper without any quarantine workarounds.
+
+### One-time setup
+
+1. **Developer ID Application certificate** in the login keychain (verify with
+   `security find-identity -v -p codesigning`).
+2. **Notary credentials** stored under the profile name the signing script
+   expects (`conctl-notary`):
+   ```bash
+   xcrun notarytool store-credentials conctl-notary \
+     --apple-id "you@example.com" --team-id 9MG4YT2G93
+   ```
+   (Uses an app-specific password from appleid.apple.com.)
+3. **GitHub token** with `repo` scope, exported as `GITHUB_TOKEN`. This is used
+   both to create the GitHub Release and to push the cask to the separate
+   `darinkelkhoff/homebrew-tap` repo, so the default Actions token is not
+   sufficient — use a classic PAT.
+
+### Cutting a release
+
 ```bash
 git tag v0.1.0 && git push --tags
-goreleaser release --clean      # needs GITHUB_TOKEN with repo scope
+export GITHUB_TOKEN=...           # classic PAT, repo scope
+goreleaser release --clean
 ```
 
-This publishes macOS binaries to a GitHub Release and updates the Homebrew
-formula in the `darinkelkhoff/homebrew-tap` repo. Users then
-`brew install darinkelkhoff/tap/conctl`.
+GoReleaser builds the darwin amd64/arm64 binaries, runs
+`scripts/sign-and-notarize.sh` on each (sign → notarize → wait; a few minutes
+total), publishes the archives to a GitHub Release, and updates the cask in
+`darinkelkhoff/homebrew-tap`. Users then `brew install darinkelkhoff/tap/conctl`.
+
+To rehearse without publishing, use
+`CONCTL_SKIP_SIGN=1 goreleaser release --snapshot --clean`. `--snapshot` skips
+the GitHub push but still runs build hooks, so `CONCTL_SKIP_SIGN=1` is what
+actually bypasses the (slow, network-bound) signing/notarization step.
+
+If notarization fails, inspect the reason with:
+```bash
+xcrun notarytool log <submission-id> --keychain-profile conctl-notary
+```
 
 ## Credits
 

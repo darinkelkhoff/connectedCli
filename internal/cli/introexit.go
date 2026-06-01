@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dkelkhoff/connectedCli/internal/chapters"
-	"github.com/dkelkhoff/connectedCli/internal/podsearch"
+	"github.com/darinkelkhoff/connectedCli/internal/chapters"
+	"github.com/darinkelkhoff/connectedCli/internal/podsearch"
 	"github.com/spf13/cobra"
 )
 

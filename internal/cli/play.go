@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dkelkhoff/connectedCli/internal/audio"
-	"github.com/dkelkhoff/connectedCli/internal/chapters"
+	"github.com/darinkelkhoff/connectedCli/internal/audio"
+	"github.com/darinkelkhoff/connectedCli/internal/chapters"
 	"github.com/spf13/cobra"
 )
 

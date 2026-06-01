@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dkelkhoff/connectedCli/internal/podsearch"
-	"github.com/dkelkhoff/connectedCli/internal/render"
+	"github.com/darinkelkhoff/connectedCli/internal/podsearch"
+	"github.com/darinkelkhoff/connectedCli/internal/render"
 	"github.com/spf13/cobra"
 )
 

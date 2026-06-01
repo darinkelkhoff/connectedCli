@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dkelkhoff/connectedCli/internal/chapters"
-	"github.com/dkelkhoff/connectedCli/internal/feed"
-	"github.com/dkelkhoff/connectedCli/internal/render"
+	"github.com/darinkelkhoff/connectedCli/internal/chapters"
+	"github.com/darinkelkhoff/connectedCli/internal/feed"
+	"github.com/darinkelkhoff/connectedCli/internal/render"
 	"github.com/spf13/cobra"
 )
 

@@ -1,4 +1,4 @@
-module github.com/dkelkhoff/connectedCli
+module github.com/darinkelkhoff/connectedCli
 
 go 1.25.0
 

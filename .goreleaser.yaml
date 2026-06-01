@@ -2,7 +2,7 @@ version: 2
 project_name: conctl
 release:
   github:
-    owner: dkelkhoff
+    owner: darinkelkhoff
     name: connectedCli
 builds:
   - id: conctl
@@ -12,22 +12,20 @@ builds:
     goos: [darwin]
     goarch: [amd64, arm64]
     ldflags:
-      - -s -w -X github.com/dkelkhoff/connectedCli/internal/cli.Version={{.Version}}
+      - -s -w -X github.com/darinkelkhoff/connectedCli/internal/cli.Version={{.Version}}
+    hooks:
+      # Sign (Developer ID + hardened runtime) and notarize each binary
+      # before it is archived, so the published tarball passes Gatekeeper.
+      post:
+        - './scripts/sign-and-notarize.sh "{{ .Path }}"'
 archives:
   - formats: [tar.gz]
 homebrew_casks:
   - name: conctl
     repository:
-      owner: dkelkhoff
+      owner: darinkelkhoff
       name: homebrew-tap
-    homepage: "https://github.com/dkelkhoff/connectedCli"
+    homepage: "https://github.com/darinkelkhoff/connectedCli"
     description: "A command-line companion for the Connected podcast"
     dependencies:
       - formula: ffmpeg
-    # Remove the Gatekeeper quarantine flag so the unsigned binary runs.
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/conctl"]
-          end

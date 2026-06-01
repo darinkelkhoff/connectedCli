@@ -42,8 +42,8 @@ sits on top of a real chapter engine, plus two standalone real features
 ## Distribution
 
 - **Language:** Go. Single static binary. `cobra` for the command tree.
-- **Install:** `brew install dkelkhoff/tap/conctl`. A sibling GitHub repo
-  `dkelkhoff/homebrew-tap` holds the formula; the binary is attached to GitHub
+- **Install:** `brew install darinkelkhoff/tap/conctl`. A sibling GitHub repo
+  `darinkelkhoff/homebrew-tap` holds the formula; the binary is attached to GitHub
   Releases (built/published with GoReleaser). 100% GitHub — no other registry.
 - **Identifier:** `com.kelkhoff.conctl` where a bundle/package id is needed.
 - **Runtime dependencies:**
